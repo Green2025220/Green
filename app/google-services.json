@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "515543567906",
+    "project_id": "forest-adventure-7a869",
+    "storage_bucket": "forest-adventure-7a869.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:515543567906:android:7caf5f882c01e4c270847b",
+        "android_client_info": {
+          "package_name": "com.example.green"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAt5JiZZ3JLtWaN0K3TEm8E9fDtPDFPEd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:515543567906:android:0109153b2f48cae370847b",
+        "android_client_info": {
+          "package_name": "tw.edu.pu.csim.s1114702.green"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAt5JiZZ3JLtWaN0K3TEm8E9fDtPDFPEd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
