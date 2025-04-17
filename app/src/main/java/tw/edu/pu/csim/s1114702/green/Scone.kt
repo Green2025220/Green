@@ -69,16 +69,16 @@ fun SconeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(32.dp)) // 與按鈕列表的間距
 
             // 按鈕列表
-            val buttonLabels = listOf("全台回收地點", "碳排放計算器", "森林闖關", "我的森林", "每日綠色挑戰")
+            val buttonLabels = listOf( "碳排放計算器", "森林闖關", "我的森林", "每日綠色挑戰", "商店")
 
             buttonLabels.forEach { label ->
                 RoundedButton(text = label, onClick = {
                     when (label) {
-                        "全台回收地點" -> navController.navigate("recycle")
                         "碳排放計算器" -> navController.navigate("calculator")
                         "森林闖關" -> navController.navigate("game")
                         "我的森林" -> navController.navigate("myforest")
                         "每日綠色挑戰" -> navController.navigate("everyday")
+                        "商店" -> navController.navigate("store")
                     }
                 })
                 Spacer(modifier = Modifier.height(16.dp))

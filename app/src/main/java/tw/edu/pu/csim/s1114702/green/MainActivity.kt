@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,21 +41,21 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(context: Context) {
     val navController = rememberNavController()
+    val viewModel: ViewModel = viewModel()  // 建立共用的 ViewModel
     NavHost(navController = navController, startDestination = "login") {
         composable("login") { LoginScreen(navController) }
         composable("scone") { SconeScreen(navController) }
-        composable("recycle") { RecycleScreen(navController) }
         composable("calculator") { CalculatorScreen(navController) }
         composable("car") { CarScreen(navController, context) }  // 傳遞 context 給 CalculatorScreen
         composable("motor") { MotorScreen(navController, context) }
         composable("bus") { BusScreen(navController, context) }
         composable("game") { GameScreen(navController) }
         composable("myforest") { MyforestScreen(navController) }
-        composable("everyday") { EverydayScreen(navController) }
+        composable("everyday") { EverydayScreen(navController, viewModel) }
         composable("g1level") { G1levelScreen(navController) }
         composable("g2level") { G2levelScreen(navController) }
         composable("g3level") { G3levelScreen(navController) }
-
+        composable("store") { StoreScreen(navController, viewModel) }
     }
 }
 
@@ -100,7 +101,7 @@ fun LoginScreen(navController: NavController) {
             TextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("密碼") },
+                label = { Text("密碼(6碼)") },
                 modifier = Modifier.width(250.dp)
             )
 

@@ -26,13 +26,15 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
+import tw.edu.pu.csim.s1114702.green.R
 
 @Composable
 fun BusScreen(navController: NavController, context: Context) {
-    val backgroundImage = painterResource(id = R.drawable.greenback)
-    val backButtonImage = painterResource(id = R.drawable.backarrow)
 
     var totalCarbonEmission by remember { mutableStateOf(0.0) }
     var currentSpeed by remember { mutableStateOf(0f) }
@@ -55,8 +57,10 @@ fun BusScreen(navController: NavController, context: Context) {
         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
 
+    // 修正的地方：繼承 LocationCallback 並覆寫 onLocationResult 方法
     val locationCallback = remember {
         object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
@@ -72,14 +76,21 @@ fun BusScreen(navController: NavController, context: Context) {
                         lastLocation = location
                     }
 
-                    Log.d("LocationUpdate", "Speed: ${currentSpeed * 3.6}, Distance: $totalDistance km")
+                    Log.d(
+                        "LocationUpdate",
+                        "Speed: ${currentSpeed * 3.6}, Distance: $totalDistance km"
+                    )
                 }
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             val locationRequest = LocationRequest.create().apply {
                 interval = 1000
                 fastestInterval = 500
@@ -109,69 +120,111 @@ fun BusScreen(navController: NavController, context: Context) {
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = backgroundImage,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.matchParentSize()
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(16.dp)
-                .clickable { navController.popBackStack() }
-        ) {
-            Image(
-                painter = backButtonImage,
-                contentDescription = "Back",
-                modifier = Modifier.size(40.dp)
-            )
-        }
-
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFA0D6A1)) // 淺綠色背景
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(bottom = 30.dp),
+            verticalArrangement = Arrangement.Top,  // 讓內容從上方開始排列
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("城市公車碳排放計算器", fontSize = 24.sp, color = Color.Black)
-
-            // 🚀 **當前速度顯示為整數**
-            Text(
-                text = "當前速度: ${currentSpeed.times(3.6).toInt()} 公里/小時",
-                fontSize = 18.sp,
-                color = Color.Black
-            )
-
-            Text(
-                text = "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
-                fontSize = 18.sp,
-                color = Color.Black
-            )
-
-            Text(
-                text = "總碳排放量: ${String.format("%.2f", totalCarbonEmission)} 公斤 CO₂",
-                fontSize = 18.sp,
-                color = Color.Black
-            )
-
-            Button(
-                onClick = {
-                    if (isCalculating) {
-                        isCalculating = false
-                        calculateCarbonEmission()
-                    } else {
-                        isCalculating = true
-                        totalDistance = 0.0
-                        totalCarbonEmission = 0.0
-                        lastLocation = null
-                    }
-                },
-                modifier = Modifier.padding(vertical = 8.dp)
+        )
+        {
+            // **返回箭頭 + 標題**
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             ) {
-                Text(if (isCalculating) "停止計算" else "開始計算")
+                // **返回按鈕靠左**
+                Image(
+                    painter = painterResource(id = R.drawable.backarrow), // 確保 R.drawable.backarrow 存在
+                    contentDescription = "Back",
+                    modifier = Modifier
+                        .size(40.dp) // 設定返回按鈕大小
+                        .align(Alignment.CenterStart) // **對齊 Box 左側**
+                        .clickable { navController.popBackStack() } // 點擊返回上一頁
+                )
+
+                // **標題置中**
+                Text(
+                    text = "綠  森  友",
+                    fontSize = 28.sp,
+                    color = Color(0xFF005500), // 深綠色
+                    modifier = Modifier.align(Alignment.Center) // **文字置中**
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // **橫線**
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth() // 橫線貼齊左右
+                    .height(4.dp) // 設定線條厚度
+                    .background(Color(0xFF005500))
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("城市公車碳排放計算器", fontSize = 24.sp, color = Color.Black)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "當前速度: ${currentSpeed.times(3.6).toInt()} 公里/小時",
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+
+                        Text(
+                            text = "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+
+                        Text(
+                            text = "總碳排放量: ${String.format("%.2f", totalCarbonEmission)} 公斤 CO₂",
+                            fontSize = 18.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        if (isCalculating) {
+                            isCalculating = false
+                            calculateCarbonEmission()
+                        } else {
+                            isCalculating = true
+                            totalDistance = 0.0
+                            totalCarbonEmission = 0.0
+                            lastLocation = null
+                        }
+                    },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Text(if (isCalculating) "停止計算" else "開始計算")
+                }
             }
         }
     }
