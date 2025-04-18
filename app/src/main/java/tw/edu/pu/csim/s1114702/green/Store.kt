@@ -16,13 +16,6 @@ import androidx.navigation.NavController
 
 @Composable
 fun StoreScreen(navController: NavController, viewModel: ViewModel) {
-    val completedCount = viewModel.checkStates.count { it }
-    val score = when {
-        completedCount >= 8 -> 10
-        completedCount >= 5 -> 5
-        completedCount >= 3 -> 3
-        else -> 0
-    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -32,27 +25,24 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 30.dp),
-            verticalArrangement = Arrangement.Top,  // 讓內容從上方開始排列
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFA0D6A1)) // 淺綠色背景
+                    .background(Color(0xFFA0D6A1))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFA0D6A1))
                 ) {
-                    // 返回箭頭 + 標題區塊（有 padding）
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        // 返回按鈕靠左
                         Image(
                             painter = painterResource(id = R.drawable.backarrow),
                             contentDescription = "Back",
@@ -62,7 +52,6 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
                                 .clickable { navController.popBackStack() }
                         )
 
-                        // 標題置中
                         Text(
                             text = "商 店",
                             fontSize = 28.sp,
@@ -88,8 +77,7 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-
-                    Text(text = "目前累積分數：$score 分", fontSize = 24.sp, color = Color.Black)
+                    Text(text = "目前累積分數：${viewModel.totalScore} 分", fontSize = 24.sp, color = Color.Black)
                 }
             }
         }
