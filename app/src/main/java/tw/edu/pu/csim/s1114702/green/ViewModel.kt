@@ -14,35 +14,34 @@ class ViewModel : ViewModel() {
         "購買綠色商標商品", "選擇綠色旅遊行程", "節約用水"
     )
 
-    // 勾選狀態列表，使用 mutableStateList 以便於 Compose 更新界面
+    // 勾選狀態列表
     val checkStates = mutableStateListOf(*Array(checklistItems.size) { false })
 
-    // 累積的總分數
+    // 累積分數
     var totalScore by mutableStateOf(0)
         private set
 
-    // 上次檢查的日期
-    private var lastCheckedDate: LocalDate = LocalDate.now()
+    // 已兌換的商品
+    var redeemedItems = mutableStateListOf<String>()
+        private set
 
-    // 是否已經加過分數（確保每天只加一次分數）
+    // 上次檢查日期與今日是否加分
+    private var lastCheckedDate: LocalDate = LocalDate.now()
     private var hasAddedScoreToday = false
 
-    // 每次進入每日/商店畫面時呼叫此方法
     fun checkAndResetDaily() {
         val now = LocalDateTime.now()
         val today = now.toLocalDate()
 
         if (today != lastCheckedDate) {
-            // 日期變更時，重設勾選清單與狀態
             resetChecklist()
             lastCheckedDate = today
             hasAddedScoreToday = false
         }
     }
 
-    // 計算每日挑戰的分數（只會執行一次）
     fun calculateDailyScore() {
-        if (hasAddedScoreToday) return  // 防止重複加分
+        if (hasAddedScoreToday) return
 
         val completedCount = checkStates.count { it }
         val score = when {
@@ -55,23 +54,22 @@ class ViewModel : ViewModel() {
         hasAddedScoreToday = true
     }
 
-    // 重設勾選清單
     private fun resetChecklist() {
         checkStates.replaceAll { false }
     }
 
-    // 花費分數（兌換商品）
-    fun spendPoints(amount: Int): Boolean {
-        return if (totalScore >= amount) {
-            totalScore -= amount
+    fun hasCompletedToday(): Boolean {
+        return hasAddedScoreToday
+    }
+
+    // ✅ 用來兌換商品，會自動扣分並記錄兌換紀錄
+    fun redeemItem(name: String, cost: Int): Boolean {
+        return if (totalScore >= cost && !redeemedItems.contains(name)) {
+            totalScore -= cost
+            redeemedItems.add(name)
             true
         } else {
             false
         }
-    }
-
-    // 檢查今天是否已完成（供 UI 使用）
-    fun hasCompletedToday(): Boolean {
-        return hasAddedScoreToday
     }
 }

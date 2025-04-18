@@ -50,7 +50,7 @@ fun AppNavigation(context: Context) {
         composable("motor") { MotorScreen(navController, context) }
         composable("bus") { BusScreen(navController, context) }
         composable("game") { GameScreen(navController) }
-        composable("myforest") { MyforestScreen(navController) }
+        composable("myforest") { MyforestScreen(navController, viewModel) }
         composable("everyday") { EverydayScreen(navController, viewModel) }
         composable("g1level") { G1levelScreen(navController) }
         composable("g2level") { G2levelScreen(navController) }
