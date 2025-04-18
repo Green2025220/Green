@@ -47,22 +47,31 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
         if ("澆水器" in viewModel.redeemedItems) {
             DraggableItem(
                 imageRes = R.drawable.watering,
-                description = "澆水器"
+                description = "澆水器",
+                viewModel = viewModel
             )
         }
         if ("剪刀" in viewModel.redeemedItems) {
             DraggableItem(
                 imageRes = R.drawable.scissors,
-                description = "剪刀"
+                description = "剪刀",
+                viewModel = viewModel
             )
         }
+
     }
 }
 
 @Composable
-fun DraggableItem(imageRes: Int, description: String) {
-    var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+fun DraggableItem(
+    imageRes: Int,
+    description: String,
+    viewModel: ViewModel
+) {
+    // 初始位置從 ViewModel 讀取
+    val initial = viewModel.getItemPosition(description)
+    var offsetX by remember { mutableStateOf(initial.x) }
+    var offsetY by remember { mutableStateOf(initial.y) }
 
     Image(
         painter = painterResource(id = imageRes),
@@ -75,7 +84,9 @@ fun DraggableItem(imageRes: Int, description: String) {
                     change.consume()
                     offsetX += dragAmount.x
                     offsetY += dragAmount.y
+                    viewModel.updateItemPosition(description, offsetX, offsetY) // ✅ 寫入 ViewModel
                 }
             }
     )
 }
+

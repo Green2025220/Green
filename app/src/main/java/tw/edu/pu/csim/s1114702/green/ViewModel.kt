@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+data class ItemPosition(val x: Float, val y: Float)
+
 class ViewModel : ViewModel() {
 
     // 每日挑戰項目
@@ -71,5 +73,18 @@ class ViewModel : ViewModel() {
         } else {
             false
         }
+    }
+    // 儲存每個商品的座標
+    var itemPositions = mutableStateMapOf<String, ItemPosition>()
+        private set
+
+    // 更新位置
+    fun updateItemPosition(name: String, x: Float, y: Float) {
+        itemPositions[name] = ItemPosition(x, y)
+    }
+
+    // 取得位置（預設在螢幕中央附近）
+    fun getItemPosition(name: String): ItemPosition {
+        return itemPositions[name] ?: ItemPosition(200f, 400f)
     }
 }
