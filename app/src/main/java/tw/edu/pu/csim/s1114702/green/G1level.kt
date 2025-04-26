@@ -109,50 +109,56 @@ fun QuizGameScreen(navController: NavController) {
         listOf(
             Question(
                 "小王和小張剛吃完晚餐，兩人開始收拾桌面。小王喝完一杯飲料後，準備丟掉塑膠吸管，但不確定應該丟哪裡。於是他問小張：「這根塑膠吸管應該丟在哪裡？」",
-                R.drawable.question1_bg,
+                R.drawable.question1,
                 listOf("可回收", "一般垃圾"),
                 1
             ),
             Question(
                 "小張正在收拾廚房的桌面，看到桌上有個玻璃瓶，他準備把瓶子丟進垃圾桶，但猶豫了一下，問小王：「這瓶玻璃應該怎麼處理？我記得玻璃是可以回收的對吧？」",
-                R.drawable.question2_bg,
+                R.drawable.question2,
                 listOf("可回收", "一般垃圾"),
                 0
             ),
             Question(
                 "小王順手拿起了用過的餐巾紙，準備丟進垃圾袋，這時小張提醒他：「別忘了，這些用過的衛生紙應該丟哪裡？」小王有些疑惑，回頭問小張。？",
-                R.drawable.question3_bg,
+                R.drawable.question3,
                 listOf("可回收", "一般垃圾"),
                 1
             ),
             Question(
                 "小張正在整理餐桌，看到旁邊的可樂罐，說道：「我記得這種鋁罐是可以回收的，對嗎？這個鋁罐應該放哪裡？」",
-                R.drawable.question4_bg,
+                R.drawable.question4,
                 listOf("是", "否"),
                 0
             ),
             Question(
                 "小王拿起旁邊的寶特瓶，看到瓶蓋還沒有拆下來，問小張：「那這個寶特瓶的瓶蓋要回收嗎？是不是跟瓶身分開處理？」",
-                R.drawable.question5_bg,
+                R.drawable.question5,
                 listOf("是", "否"),
                 0
             ),
             Question(
                 "小張和小王剛買完晚餐外賣，兩人準備將剛買回來的餐盒處理掉。小張拿起保麗龍餐盒，問小王：「這個保麗龍餐盒可以回收嗎？我記得這種東西不容易回收吧？」",
-                R.drawable.question6_bg,
+                R.drawable.question6,
                 listOf("是", "否"),
                 1
             ),
             Question(
                 "回到家後，小張開始整理購物袋，發現袋子裡有一個牛奶紙盒。他問小王：「這個牛奶紙盒該丟哪裡？我們是不是可以丟進回收箱？」",
-                R.drawable.question7_bg,
+                R.drawable.question7,
                 listOf("可回收", "一般垃圾"),
                 0
             ),
             Question(
                 "小王發現旁邊還有一包剛吃完的即食餐的鋁箔包，他隨手拿起來，問小張：「這個用過的鋁箔包可以回收嗎？是不是需要先清理乾淨？」",
-                R.drawable.question8_bg,
+                R.drawable.question8,
                 listOf("是", "否"),
+                0
+            ),
+            Question(
+                "小張整理家裡的舊報紙時，看見一堆新聞紙堆在角落，問小王：「這些舊報紙應該丟在哪？我記得紙類可以回收，但不確定是不是所有的報紙都能回收。」",
+                R.drawable.question9,
+                listOf("可回收", "一般垃圾"),
                 0
             )
         )
