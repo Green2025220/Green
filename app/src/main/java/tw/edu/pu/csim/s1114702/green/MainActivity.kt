@@ -56,6 +56,7 @@ fun AppNavigation(context: Context) {
         composable("g2level") { G2levelScreen(navController) }
         composable("g3level") { G3levelScreen(navController) }
         composable("store") { StoreScreen(navController, viewModel) }
+        composable("level1") { QuizGameScreen(navController) }
     }
 }
 
