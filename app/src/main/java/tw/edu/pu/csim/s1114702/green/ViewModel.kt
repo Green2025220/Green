@@ -48,6 +48,7 @@ class ViewModel : ViewModel() {
         val isNewDay = today != lastCheckedDate
 
         if (isNewDay) {
+            // 重置 checklist 狀態
             resetChecklist()
             hasAddedScoreToday = false
             lastCheckedDate = today
@@ -55,7 +56,7 @@ class ViewModel : ViewModel() {
 
         loadDailyChallengeFromFirebase(email) {
             if (isNewDay) {
-                // 如果是新的一天，Firebase 載入後也要清空勾選狀態（避免覆蓋掉 resetChecklist）
+                // 確保 Firebase 資料載入後清空勾選框狀態
                 checkStates.replaceAll { false }
             }
             onComplete?.invoke()
@@ -77,6 +78,7 @@ class ViewModel : ViewModel() {
         }
         totalScore += score
         hasAddedScoreToday = true
+        updateTotalScore(totalScore)
     }
 
     fun hasCompletedToday(): Boolean = hasAddedScoreToday
@@ -94,7 +96,7 @@ class ViewModel : ViewModel() {
         val db = FirebaseFirestore.getInstance()
         val data = hashMapOf(
             "score" to totalScore,
-            "checklist" to checkStates.toList(),
+            //"checklist" to checkStates.toList(),
             "redeemedItems" to redeemedItems,
             "itemPositions" to itemPositions.mapValues { mapOf("x" to it.value.x, "y" to it.value.y) }
         )
@@ -134,9 +136,9 @@ class ViewModel : ViewModel() {
     }
 
     fun updateTotalScore(newScore: Int) {
-        totalScore += newScore
+        totalScore = newScore
         // 呼叫 Firebase 更新分數
-        updateScoreInFirebase(totalScore)
+        updateScoreInFirebase(newScore)
     }
 
     private fun updateScoreInFirebase(score: Int) {
