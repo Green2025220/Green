@@ -140,11 +140,23 @@ class ViewModel : ViewModel() {
     }
 
     private fun updateScoreInFirebase(score: Int) {
-        userId?.let {
-            val userScoreRef = database.getReference("users/$it/score")
-            userScoreRef.setValue(score) // 設置使用者的分數
-        } ?: Log.e("ViewModel", "User ID is null, unable to update score")
+        val email = FirebaseAuth.getInstance().currentUser?.email
+        if (email != null) {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users").document(email)
+                .update("score", score)
+                .addOnSuccessListener {
+                    // 成功上傳，可以加 Log 或提示
+                    Log.d("ViewModel", "Score successfully updated in Firestore")
+                }
+                .addOnFailureListener { e ->
+                    Log.w("ViewModel", "Error updating score", e)
+                }
+        } else {
+            Log.e("ViewModel", "User email is null, cannot update score")
+        }
     }
+
     // 從 Firebase 載入用戶的分數
     private fun loadScoreFromFirebase(userId: String) {
         val scoreRef = database.getReference("users/$userId/score")
