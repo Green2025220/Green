@@ -65,6 +65,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx") // Firebase Authentication KTX 版本
     implementation("com.google.firebase:firebase-storage-ktx") // Firebase Storage KTX 版本
     implementation("com.google.firebase:firebase-messaging-ktx") // Firebase Messaging KTX 版本
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+
+
 
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     // Firebase 核心
@@ -79,4 +83,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+
+    implementation("com.google.gms:google-services:4.3.15")
 }

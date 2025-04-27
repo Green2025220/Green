@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
-fun StoreScreen(navController: NavController, viewModel: ViewModel) {
+fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFA0D6A1)) // 淺綠色背景
+            .background(Color(0xFFA0D6A1))
     ) {
         Column(
             modifier = Modifier
@@ -28,7 +28,6 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 標題區塊
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -53,7 +52,6 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 分隔線
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,7 +61,6 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 顯示分數
             Text(
                 text = "目前累積分數：${viewModel.totalScore} 分",
                 fontSize = 24.sp,
@@ -72,7 +69,6 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 兩個按鈕
             Row(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -80,17 +76,23 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel) {
                 StoreButton(
                     imageRes = R.drawable.watering,
                     name = "澆水器",
-                    score = 10,
+                    score = 5,
                     onClick = {
-                        viewModel.redeemItem("澆水器", 10)
+                        if (viewModel.redeemItem("澆水器", 5)) {
+                            viewModel.updateTotalScore(viewModel.totalScore)
+                            viewModel.saveDailyChallengeToFirebase(userEmail)
+                        }
                     }
                 )
                 StoreButton(
                     imageRes = R.drawable.scissors,
                     name = "剪刀",
-                    score = 6,
+                    score = 3,
                     onClick = {
-                        viewModel.redeemItem("剪刀", 6)
+                        if (viewModel.redeemItem("剪刀", 3)) {
+                            viewModel.updateTotalScore(viewModel.totalScore)
+                            viewModel.saveDailyChallengeToFirebase(userEmail)
+                        }
                     }
                 )
             }
@@ -119,4 +121,3 @@ fun StoreButton(imageRes: Int, name: String, score: Int, onClick: () -> Unit) {
         Text(text = "${score}分", fontSize = 18.sp, color = Color.Black)
     }
 }
-

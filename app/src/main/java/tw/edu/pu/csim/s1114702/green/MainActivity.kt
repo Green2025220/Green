@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 import java.security.MessageDigest
@@ -30,6 +31,12 @@ import java.util.Base64
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Firebase 初始化
+        if (FirebaseApp.getApps(this).isEmpty()) {
+            FirebaseApp.initializeApp(this)
+        }
+
         setContent {
             GreenTheme {
                 AppNavigation(context = this)
@@ -41,12 +48,18 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(context: Context) {
     val navController = rememberNavController()
-    val viewModel: ViewModel = viewModel()  // 建立共用的 ViewModel
+    val viewModel: ViewModel = viewModel()
+    var userEmail by remember { mutableStateOf("") }
+
     NavHost(navController = navController, startDestination = "login") {
-        composable("login") { LoginScreen(navController) }
+        composable("login") {
+            LoginScreen(navController, viewModel) { email ->
+                userEmail = email
+            }
+        }
         composable("scone") { SconeScreen(navController) }
         composable("calculator") { CalculatorScreen(navController) }
-        composable("car") { CarScreen(navController, context) }  // 傳遞 context 給 CalculatorScreen
+        composable("car") { CarScreen(navController, context) }
         composable("motor") { MotorScreen(navController, context) }
         composable("bus") { BusScreen(navController, context) }
         composable("game") { GameScreen(navController) }
@@ -55,12 +68,17 @@ fun AppNavigation(context: Context) {
         composable("g1level") { G1levelScreen(navController) }
         composable("g2level") { G2levelScreen(navController) }
         composable("g3level") { G3levelScreen(navController) }
-        composable("store") { StoreScreen(navController, viewModel) }
+        composable("store") { StoreScreen(navController, viewModel, userEmail) }
+        composable("level1") { QuizGameScreen(navController, viewModel = viewModel) }
     }
 }
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    viewModel: ViewModel,
+    onLoginSuccess: (String) -> Unit
+) {
     val backgroundImage = painterResource(id = R.drawable.greenback)
     val treeImage = painterResource(id = R.drawable.logintree)
     val context = LocalContext.current
@@ -107,11 +125,15 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { loginUser(email, password, context, navController, db) }) {
+            Button(onClick = {
+                loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
+            }) {
                 Text("登入")
             }
 
-            Button(onClick = { registerUser(email, password, context, db) }) {
+            Button(onClick = {
+                registerUser(email, password, context, db)
+            }) {
                 Text("註冊")
             }
 
@@ -119,23 +141,30 @@ fun LoginScreen(navController: NavController) {
                 Text(text = it, color = Color.Red, fontSize = 14.sp)
             }
 
-
-            // logintree 作為一鍵登入按鈕
             Image(
                 painter = treeImage,
                 contentDescription = "一鍵登入",
                 modifier = Modifier
-                    .size(120.dp)  // 設定圖片大小
+                    .size(120.dp)
                     .clickable {
                         Toast.makeText(context, "一鍵登入成功！", Toast.LENGTH_SHORT).show()
-                        navController.navigate("scone") // 直接跳轉到 scone 頁面
+                        onLoginSuccess("guest@example.com")
+                        navController.navigate("scone")
                     }
             )
         }
     }
 }
 
-fun loginUser(email: String, password: String, context: Context, navController: NavController, db: FirebaseFirestore) {
+fun loginUser(
+    email: String,
+    password: String,
+    context: Context,
+    navController: NavController,
+    db: FirebaseFirestore,
+    viewModel: ViewModel,
+    onLoginSuccess: (String) -> Unit
+) {
     if (email.isBlank() || password.isBlank()) {
         Toast.makeText(context, "請輸入帳號和密碼", Toast.LENGTH_SHORT).show()
         return
@@ -148,7 +177,13 @@ fun loginUser(email: String, password: String, context: Context, navController: 
                 val inputPasswordHash = hashPassword(password)
                 if (storedPasswordHash == inputPasswordHash) {
                     Toast.makeText(context, "登入成功！", Toast.LENGTH_SHORT).show()
-                    navController.navigate("scone")
+
+                    //從 Firebase 載入完整的挑戰資料
+                    viewModel.loadDailyChallengeFromFirebase(email) {
+                        onLoginSuccess(email)
+                        navController.navigate("scone")
+                    }
+
                 } else {
                     Toast.makeText(context, "密碼錯誤", Toast.LENGTH_SHORT).show()
                 }
@@ -167,23 +202,27 @@ fun registerUser(email: String, password: String, context: Context, db: Firebase
         return
     }
 
+    // 加密密碼
     val hashedPassword = hashPassword(password)
 
+    // 準備儲存資料
     val user = hashMapOf(
         "email" to email,
-        "password" to hashedPassword
+        "password" to hashedPassword,  // 儲存加密後的密碼
+        "score" to 0
     )
 
+    // 儲存用戶資料到 Firestore
     db.collection("users").document(email).set(user)
         .addOnSuccessListener {
             Toast.makeText(context, "註冊成功，請登入！", Toast.LENGTH_SHORT).show()
         }
-        .addOnFailureListener {
-            Toast.makeText(context, "註冊失敗: ${it.message}", Toast.LENGTH_SHORT).show()
+        .addOnFailureListener { exception ->
+            Toast.makeText(context, "註冊失敗: ${exception.message}", Toast.LENGTH_SHORT).show()
         }
 }
 
 fun hashPassword(password: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
-    return Base64.getEncoder().encodeToString(bytes)
+    return bytes.joinToString("") { "%02x".format(it) }  // 使用 Hex 格式
 }

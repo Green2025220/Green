@@ -23,40 +23,26 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
     val checkStates = viewModel.checkStates
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-
-    // 是否已完成今日挑戰（由 ViewModel 控制邏輯會更準確）
     var isCompleted by remember { mutableStateOf(viewModel.hasCompletedToday()) }
 
     LaunchedEffect(Unit) {
-        viewModel.checkAndResetDaily()
-        isCompleted = viewModel.hasCompletedToday()
+        viewModel.initializeDailyData("user@example.com") {
+            isCompleted = viewModel.hasCompletedToday()
+        }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFA0D6A1))
+        modifier = Modifier.fillMaxSize().background(Color(0xFFA0D6A1))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFA0D6A1))
-        ) {
-            // 標題列
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
+        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFA0D6A1))) {
+            Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Image(
                     painter = painterResource(id = R.drawable.backarrow),
                     contentDescription = "Back",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .align(Alignment.CenterStart)
-                        .clickable { navController.popBackStack() }
+                    modifier = Modifier.size(40.dp).align(Alignment.CenterStart).clickable {
+                        navController.popBackStack()
+                    }
                 )
-
                 Text(
                     text = "每日綠色挑戰",
                     fontSize = 28.sp,
@@ -64,18 +50,10 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(Color(0xFF005500))
-            )
+            Box(modifier = Modifier.fillMaxWidth().height(4.dp).background(Color(0xFF005500)))
         }
 
-        // 勾選清單內容
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,9 +63,7 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
         ) {
             checklistItems.forEachIndexed { index, item ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
@@ -101,22 +77,12 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
                         modifier = Modifier.weight(1f)
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color(0xFF005500))
-                )
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF005500)))
             }
         }
 
-        // 底部「完成挑戰」按鈕
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(16.dp)
         ) {
             Button(
                 onClick = {
@@ -126,15 +92,14 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
                             snackbarHostState.showSnackbar("今日挑戰已完成，分數已加總！")
                         }
                         isCompleted = true
+                        viewModel.saveDailyChallengeToFirebase("user@example.com")
                     } else {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar("今日已完成過挑戰！")
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = !isCompleted
             ) {
                 Text("完成挑戰", fontSize = 20.sp)

@@ -16,10 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
+
 
 @Composable
 fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
     val backgroundImage = painterResource(id = R.drawable.grassland)
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 背景圖
@@ -30,10 +36,11 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
             modifier = Modifier.matchParentSize()
         )
 
-        // 返回按鈕
+        // 返回按鈕（左上）
         Box(
             modifier = Modifier
                 .padding(16.dp)
+                .align(Alignment.TopStart)
                 .clickable { navController.popBackStack() }
         ) {
             Image(
@@ -43,7 +50,25 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
             )
         }
 
-        // 可移動的兌換商品圖示
+        // 保存按鈕（右上）
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.TopEnd)
+        ) {
+            Button(
+                onClick = {
+                    val email = "user@example.com" // ⛳ 替換成登入後的 email
+                    viewModel.saveDailyChallengeToFirebase(email)
+                    Toast.makeText(context, "位置已儲存", Toast.LENGTH_SHORT).show()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            ) {
+                Text(text = "保存", color = Color.White)
+            }
+        }
+
+        // 顯示兌換商品
         if ("澆水器" in viewModel.redeemedItems) {
             DraggableItem(
                 imageRes = R.drawable.watering,
@@ -58,9 +83,10 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
                 viewModel = viewModel
             )
         }
-
     }
 }
+
+
 
 @Composable
 fun DraggableItem(
