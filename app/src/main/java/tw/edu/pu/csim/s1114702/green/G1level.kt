@@ -333,7 +333,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = {
-                            viewModel.updateTotalScore(score)// 在 ViewModel 中更新總分
+                            viewModel.totalScore += score// 在 ViewModel 中更新總分
                             navController.popBackStack() }
                     ) {
                         Text("回到主選單")

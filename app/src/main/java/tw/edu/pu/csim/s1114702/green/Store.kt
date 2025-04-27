@@ -79,7 +79,7 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
                     score = 5,
                     onClick = {
                         if (viewModel.redeemItem("澆水器", 5)) {
-                            viewModel.updateTotalScore(viewModel.totalScore)
+                            //viewModel.updateTotalScore(viewModel.totalScore)
                             viewModel.saveDailyChallengeToFirebase(userEmail)
                         }
                     }
@@ -90,7 +90,7 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
                     score = 3,
                     onClick = {
                         if (viewModel.redeemItem("剪刀", 3)) {
-                            viewModel.updateTotalScore(viewModel.totalScore)
+                            //viewModel.updateTotalScore(viewModel.totalScore)
                             viewModel.saveDailyChallengeToFirebase(userEmail)
                         }
                     }

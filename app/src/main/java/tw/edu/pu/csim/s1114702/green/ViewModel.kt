@@ -86,6 +86,7 @@ class ViewModel : ViewModel() {
         return if (totalScore >= cost) {
             totalScore -= cost
             redeemedItems.add(name)
+//            saveDailyChallengeToFirebase(userEmail)  // 直接在這裡保存分數
             true
         } else false
     }
@@ -133,18 +134,22 @@ class ViewModel : ViewModel() {
         itemPositions[itemName] = ItemPosition(x, y)
     }
 
-    fun updateTotalScore(newScore: Int) {
-        totalScore += newScore
-        // 呼叫 Firebase 更新分數
-        updateScoreInFirebase(totalScore)
-    }
+//    fun updateTotalScore(newScore: Int) {
+//        totalScore += newScore
+//        // 呼叫 Firebase 更新分數
+//        updateScoreInFirebase(totalScore)
+//    }
 
     private fun updateScoreInFirebase(score: Int) {
-        userId?.let {
-            val userScoreRef = database.getReference("users/$it/score")
-            userScoreRef.setValue(score) // 設置使用者的分數
+        val db = FirebaseFirestore.getInstance()
+        userId?.let { uid ->
+            db.collection("users").document(uid)
+                .update("score", score)
+                .addOnSuccessListener { Log.d("ViewModel", "Score updated to Firestore!") }
+                .addOnFailureListener { e -> Log.e("ViewModel", "Error updating score", e) }
         } ?: Log.e("ViewModel", "User ID is null, unable to update score")
     }
+
     // 從 Firebase 載入用戶的分數
     private fun loadScoreFromFirebase(userId: String) {
         val scoreRef = database.getReference("users/$userId/score")
