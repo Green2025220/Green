@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
+
 @Composable
 fun G1levelScreen(navController: NavController) {
     val backgroundImage = painterResource(id = R.drawable.greenback)
