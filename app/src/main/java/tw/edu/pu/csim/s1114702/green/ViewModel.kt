@@ -135,11 +135,10 @@ class ViewModel : ViewModel() {
         itemPositions[itemName] = ItemPosition(x, y)
     }
 
-    fun updateTotalScore(newScore: Int) {
-        totalScore = newScore
-        // 呼叫 Firebase 更新分數
-        updateScoreInFirebase(newScore)
+    fun updateTotalScore(scoreToAdd: Int) {
+        totalScore += scoreToAdd
     }
+
 
     private fun updateScoreInFirebase(score: Int) {
         val email = FirebaseAuth.getInstance().currentUser?.email

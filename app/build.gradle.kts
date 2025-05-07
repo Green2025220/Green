@@ -68,6 +68,9 @@ dependencies {
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
 
+    implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
+
+
 
 
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

@@ -83,6 +83,48 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
                 viewModel = viewModel
             )
         }
+        if ("三叉" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.rake,
+                description = "三叉",
+                viewModel = viewModel
+            )
+        }
+        if ("鏟子" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.shovel,
+                description = "鏟子",
+                viewModel = viewModel
+            )
+        }
+        if ("青楓" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.tree1,
+                description = "青楓",
+                viewModel = viewModel
+            )
+        }
+        if ("牧野氏山芙蓉" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.tree2,
+                description = "牧野氏山芙蓉",
+                viewModel = viewModel
+            )
+        }
+        if ("台灣牛樟" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.tree3,
+                description = "台灣牛樟",
+                viewModel = viewModel
+            )
+        }
+        if ("截萼黃槿" in viewModel.redeemedItems) {
+            DraggableItem(
+                imageRes = R.drawable.tree4,
+                description = "截萼黃槿",
+                viewModel = viewModel
+            )
+        }
     }
 }
 
@@ -115,4 +157,3 @@ fun DraggableItem(
             }
     )
 }
-
