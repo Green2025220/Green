@@ -4,11 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -21,89 +22,119 @@ fun SconeScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFA0D6A1)) // 淺綠色背景
+//            .background(Color(0xFFA0D6A1)) // 淺綠色背景
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.homepage1),  // 背景
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 30.dp),
-            verticalArrangement = Arrangement.Top,  // 讓內容從上方開始排列
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            // **返回箭頭 + 標題**
+        ) {
+            // 返回箭頭 + 標題
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
             ) {
-                // **返回按鈕靠左**
+                // 返回按鈕靠左
                 Image(
-                    painter = painterResource(id = R.drawable.backarrow), // 確保 R.drawable.backarrow 存在
+                    painter = painterResource(id = R.drawable.backarrow),
                     contentDescription = "Back",
                     modifier = Modifier
-                        .size(40.dp) // 設定返回按鈕大小
-                        .align(Alignment.CenterStart) // **對齊 Box 左側**
-                        .clickable { navController.popBackStack() } // 點擊返回上一頁
+                        .size(40.dp)
+                        .align(Alignment.CenterStart)
+                        .clickable { navController.popBackStack() }
                 )
 
-                // **標題置中**
+                // 標題置中
                 Text(
                     text = "綠  森  友",
                     fontSize = 28.sp,
-                    color = Color(0xFF005500), // 深綠色
-                    modifier = Modifier.align(Alignment.Center) // **文字置中**
+                    color = Color(0xFF005500),
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // **橫線**
+            // 橫線
             Box(
                 modifier = Modifier
-                    .fillMaxWidth() // 橫線貼齊左右
-                    .height(4.dp) // 設定線條厚度
+                    .fillMaxWidth()
+                    .height(4.dp)
                     .background(Color(0xFF005500))
             )
 
-            Spacer(modifier = Modifier.height(32.dp)) // 與按鈕列表的間距
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // 按鈕列表
-            val buttonLabels = listOf( "碳排放計算器", "森林闖關", "我的森林", "每日綠色挑戰", "商店")
+            // 圓形按鈕群組
+            Box(modifier = Modifier.fillMaxSize()) {
+                ImageButton(
+                    resId = R.drawable.gamebtn,
+                    contentDescription = "森林闖關",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = (-100).dp, y = (-80).dp)
+                ) { navController.navigate("game") }
 
-            buttonLabels.forEach { label ->
-                RoundedButton(text = label, onClick = {
-                    when (label) {
-                        "碳排放計算器" -> navController.navigate("calculator")
-                        "森林闖關" -> navController.navigate("game")
-                        "我的森林" -> navController.navigate("myforest")
-                        "每日綠色挑戰" -> navController.navigate("everyday")
-                        "商店" -> navController.navigate("store")
-                    }
-                })
-                Spacer(modifier = Modifier.height(16.dp))
+                ImageButton(
+                    resId = R.drawable.myforestbtn,
+                    contentDescription = "我的森林",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = 100.dp, y = (-80).dp)
+                ) { navController.navigate("myforest") }
+
+                ImageButton(
+                    resId = R.drawable.calculatorbtn,
+                    contentDescription = "碳排放計算器",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = (-100).dp, y = 80.dp)
+                ) { navController.navigate("calculator") }
+
+                ImageButton(
+                    resId = R.drawable.everydaybtn,
+                    contentDescription = "每日綠色挑戰",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(x = 100.dp, y = 80.dp)
+                ) { navController.navigate("everyday") }
+
+                ImageButton(
+                    resId = R.drawable.storebtn,
+                    contentDescription = "商店",
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp)
+                ) { navController.navigate("store") }
             }
         }
     }
 }
 
-
-
-// 圓角按鈕組件
+// 使用圖片當作按鈕，可接受外部傳入 Modifier
 @Composable
-fun RoundedButton(text: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .width(250.dp)
-            .height(80.dp)
-            .background(Color(0xFFB8E6C0), shape = RoundedCornerShape(40.dp)) // 圓角矩形
-            .clickable { onClick() },  // 使用 onClick 來處理點擊事件
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontSize = 20.sp,
-            color = Color.Black
-        )
-    }
+fun ImageButton(
+    resId: Int,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Image(
+        painter = painterResource(id = resId),
+        contentDescription = contentDescription,
+        modifier = modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .clickable { onClick() },
+        contentScale = ContentScale.Crop
+    )
 }

@@ -1,26 +1,25 @@
 package tw.edu.pu.csim.s1114702.green
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.*
-import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Button
-
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 @Composable
 fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
@@ -68,7 +67,7 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
             }
         }
 
-        // 顯示兌換商品
+        // 顯示兌換商品，使用 DraggableItem，可縮放拖曳
         if ("澆水器" in viewModel.redeemedItems) {
             DraggableItem(
                 imageRes = R.drawable.watering,
@@ -128,32 +127,40 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
     }
 }
 
-
-
 @Composable
 fun DraggableItem(
     imageRes: Int,
     description: String,
     viewModel: ViewModel
 ) {
-    // 初始位置從 ViewModel 讀取
     val initial = viewModel.getItemPosition(description)
     var offsetX by remember { mutableStateOf(initial.x) }
     var offsetY by remember { mutableStateOf(initial.y) }
+    var scale by remember { mutableStateOf(1f) }
 
-    Image(
-        painter = painterResource(id = imageRes),
-        contentDescription = description,
+    val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+        scale = (scale * zoomChange).coerceIn(0.5f, 3f)
+        offsetX += panChange.x
+        offsetY += panChange.y
+    }
+
+    LaunchedEffect(offsetX, offsetY, scale) {
+        viewModel.updateItemPosition(description, offsetX, offsetY)
+    }
+
+    Box(
         modifier = Modifier
-            .size(100.dp)
             .offset { IntOffset(offsetX.toInt(), offsetY.toInt()) }
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    offsetX += dragAmount.x
-                    offsetY += dragAmount.y
-                    viewModel.updateItemPosition(description, offsetX, offsetY) // ✅ 寫入 ViewModel
-                }
-            }
-    )
+            .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale
+            )
+            .transformable(state = transformableState)
+    ) {
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = description,
+            modifier = Modifier.size(100.dp)
+        )
+    }
 }
