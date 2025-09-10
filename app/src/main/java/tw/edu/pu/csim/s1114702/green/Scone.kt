@@ -25,7 +25,7 @@ fun SconeScreen(navController: NavController) {
 //            .background(Color(0xFFA0D6A1)) // 淺綠色背景
     ) {
         Image(
-            painter = painterResource(id = R.drawable.homepage1),  // 背景
+            painter = painterResource(id = R.drawable.homepage2),  // 背景
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
