@@ -68,13 +68,13 @@ fun GameScreen(navController: NavController) {
                 Button(text = label, onClick = {
 
                     if(label == "回收挑戰"){
-                        navController.navigate("g1level")
+                        navController.navigate("level1")
                     }
                     if(label == "碳排放挑戰"){
-                        navController.navigate("G2level")
+                        navController.navigate("level1")
                     }
                     if(label == "認識SDGs"){
-                        navController.navigate("G3level")
+                        navController.navigate("level1")
                     }
 
                 })

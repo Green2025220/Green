@@ -65,9 +65,6 @@ fun AppNavigation(context: Context) {
         composable("game") { GameScreen(navController) }
         composable("myforest") { MyforestScreen(navController, viewModel) }
         composable("everyday") { EverydayScreen(navController, viewModel) }
-        composable("g1level") { G1levelScreen(navController) }
-        composable("g2level") { G2levelScreen(navController) }
-        composable("g3level") { G3levelScreen(navController) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
         composable("level1") { QuizGameScreen(navController, viewModel = viewModel) }
     }
