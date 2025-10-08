@@ -63,18 +63,18 @@ fun GameScreen(navController: NavController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val buttonLabels = listOf("回收挑戰","碳排放挑戰","認識SDGs")
+            val buttonLabels = listOf("回收挑戰","垃圾分類","認識SDGs")
             buttonLabels.forEach { label ->
                 Button(text = label, onClick = {
 
                     if(label == "回收挑戰"){
-                        navController.navigate("level1")
+                        navController.navigate("g1level")
                     }
-                    if(label == "碳排放挑戰"){
-                        navController.navigate("level1")
+                    if(label == "垃圾分類"){
+                        navController.navigate("Garbagegame")
                     }
                     if(label == "認識SDGs"){
-                        navController.navigate("level1")
+                        navController.navigate("Turn")
                     }
 
                 })
