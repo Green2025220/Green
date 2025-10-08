@@ -28,18 +28,23 @@ import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 import java.security.MessageDigest
 import java.util.Base64
 
+
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+
 import androidx.navigation.compose.*
+
 import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 
 
@@ -82,8 +87,6 @@ fun AppNavigation(context: Context) {
         composable("everyday") { EverydayScreen(navController, viewModel) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
         composable("level1") { QuizGameScreen(navController, viewModel = viewModel) }
-        composable("turn") { TurnScreen(navController) }
-        composable("Garbagegame") { GarbageGameScreen(navController) }
     }
 }
 
