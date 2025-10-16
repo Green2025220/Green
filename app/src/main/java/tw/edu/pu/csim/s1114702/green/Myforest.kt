@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlin.math.roundToInt
 
-// 🧺 範例資料類
 data class PlacedItem(
     val id: Int,
     val imageRes: Int,
@@ -37,31 +36,36 @@ data class PlacedItem(
     var scale: Float = 1f
 )
 
+// 籃子物品與商店商品的映射
+fun getBasketItemsFromStore(redeemedItems: List<String>): Map<String, Int> {
+    return mapOf(
+        "澆水器" to redeemedItems.count { it == "澆水器" },
+        "剪刀" to redeemedItems.count { it == "剪刀" },
+        "三叉" to redeemedItems.count { it == "三叉" },
+        "鏟子" to redeemedItems.count { it == "鏟子" },
+        "青楓" to redeemedItems.count { it == "青楓" },
+        "牧野氏山芙蓉" to redeemedItems.count { it == "牧野氏山芙蓉" },
+        "台灣牛樟" to redeemedItems.count { it == "台灣牛樟" },
+        "截萼黃槿" to redeemedItems.count { it == "截萼黃槿" }
+    )
+}
+
 @Composable
 fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
     val backgroundImage = painterResource(id = R.drawable.grassland)
     val context = LocalContext.current
 
-    // 籃子開關狀態
     var basketOpen by remember { mutableStateOf(false) }
 
-    // 範例可兌換物品
-    val basketItems = remember {
-        mutableStateMapOf(
-            "澆水器" to 1,
-            "剪刀" to 2,
-            "三叉" to 1,
-            "鏟子" to 1,
-            "青楓" to 2,
-            "台灣牛樟" to 1
-        )
+    // 從 ViewModel 中的已兌換物品動態生成籃子內容
+    val basketItems = remember(viewModel.redeemedItems) {
+        getBasketItemsFromStore(viewModel.redeemedItems).toMutableMap()
     }
 
-    // 已擺放的物件列表
     var placedItems by remember { mutableStateOf(listOf<PlacedItem>()) }
+    var usedItemCounts by remember { mutableStateOf(mapOf<String, Int>()) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 背景
         Image(
             painter = backgroundImage,
             contentDescription = null,
@@ -107,8 +111,9 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
                     val selected = placedItems.find { it.id == id }
                     if (selected != null) {
                         placedItems = placedItems.filterNot { it.id == id }
-                        basketItems[selected.description] =
-                            (basketItems[selected.description] ?: 0) + 1
+                        usedItemCounts = usedItemCounts.toMutableMap().apply {
+                            put(selected.description, (get(selected.description) ?: 0) - 1)
+                        }
                     }
                 },
                 onPositionChange = { id, newX, newY ->
@@ -119,11 +124,11 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
             )
         }
 
-        // 🧺 籃子按鈕
+        // 籃子按鈕 - 放在底部
         Box(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 16.dp)
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = 16.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -136,69 +141,55 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
             }
         }
 
-        // 🧺 展開的籃子內容（橫向滾動）
+        // 籃子內容（橫向滾動）- 與商店連結
         if (basketOpen) {
             Row(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 90.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(start = 90.dp, bottom = 16.dp)
                     .height(120.dp)
                     .background(Color(0xFFEDE0C8), shape = MaterialTheme.shapes.medium)
                     .horizontalScroll(rememberScrollState())
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                basketItems.forEach { (name, count) ->
-                    if (count > 0) {
+                basketItems.forEach { (name, totalCount) ->
+                    val usedCount = usedItemCounts[name] ?: 0
+                    val availableCount = totalCount - usedCount
+
+                    if (availableCount > 0) {
                         Box(
                             modifier = Modifier
                                 .padding(8.dp)
                                 .clickable {
-                                    // 點擊擺放物品
-                                    val resId = when (name) {
-                                        "澆水器" -> R.drawable.watering
-                                        "剪刀" -> R.drawable.scissors
-                                        "三叉" -> R.drawable.rake
-                                        "鏟子" -> R.drawable.shovel
-                                        "青楓" -> R.drawable.tree1
-                                        "台灣牛樟" -> R.drawable.tree3
-                                        else -> R.drawable.tree4
-                                    }
+                                    val resId = getImageResourceForItem(name)
                                     val newItem = PlacedItem(
                                         id = placedItems.size + 1,
                                         imageRes = resId,
                                         description = name
                                     )
                                     placedItems = placedItems + newItem
-                                    basketItems[name] = count - 1
+                                    usedItemCounts = usedItemCounts.toMutableMap().apply {
+                                        put(name, (get(name) ?: 0) + 1)
+                                    }
                                 }
                         ) {
                             Box(contentAlignment = Alignment.TopEnd) {
                                 Image(
-                                    painter = painterResource(
-                                        id = when (name) {
-                                            "澆水器" -> R.drawable.watering
-                                            "剪刀" -> R.drawable.scissors
-                                            "三叉" -> R.drawable.rake
-                                            "鏟子" -> R.drawable.shovel
-                                            "青楓" -> R.drawable.tree1
-                                            "台灣牛樟" -> R.drawable.tree3
-                                            else -> R.drawable.tree4
-                                        }
-                                    ),
+                                    painter = painterResource(id = getImageResourceForItem(name)),
                                     contentDescription = name,
                                     modifier = Modifier.size(80.dp)
                                 )
-                                // 顯示數量標籤
+                                // 顯示可用數量標籤
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
-                                        .background(Color.Red, CircleShape)
+                                        .background(Color.Green, CircleShape)
                                         .align(Alignment.TopEnd),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = count.toString(),
+                                        text = availableCount.toString(),
                                         color = Color.White,
                                         style = MaterialTheme.typography.bodySmall
                                     )
@@ -209,6 +200,21 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
                 }
             }
         }
+    }
+}
+
+// 獲取物品對應的圖片資源
+fun getImageResourceForItem(name: String): Int {
+    return when (name) {
+        "澆水器" -> R.drawable.watering
+        "剪刀" -> R.drawable.scissors
+        "三叉" -> R.drawable.rake
+        "鏟子" -> R.drawable.shovel
+        "青楓" -> R.drawable.tree1
+        "牧野氏山芙蓉" -> R.drawable.tree2
+        "台灣牛樟" -> R.drawable.tree3
+        "截萼黃槿" -> R.drawable.tree4
+        else -> R.drawable.tree4
     }
 }
 

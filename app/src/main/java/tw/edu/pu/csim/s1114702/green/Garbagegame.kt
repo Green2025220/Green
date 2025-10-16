@@ -52,6 +52,9 @@ fun GarbageGameScreen(navController: NavController) {
     var wrongCount by remember { mutableIntStateOf(0) }
 
 
+    var trashPool by remember { mutableStateOf<List<Pair<Int, Boolean>>>(emptyList()) }
+
+
     // 拖曳相關狀態
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var isDragging by remember { mutableStateOf(false) }
@@ -707,3 +710,6 @@ fun GarbageGameScreen(navController: NavController) {
                         ) // ← 就加在這裡！
                     ) {
                         Text("返回主選單", fontSize = 18.sp)}}}}}}
+
+
+
