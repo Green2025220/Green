@@ -562,6 +562,7 @@ class TurnViewModel : ViewModel() {
         }
     }
 
+
     private fun pauseTimer() {
         if (timerRunning) {
             pausedTime = elapsedTime.value
