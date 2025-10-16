@@ -39,12 +39,18 @@ data class AnswerRecord(
 
 
 @Composable
-fun GarbageGameScreen(navController: NavController) {
+fun GarbageGameScreen(
+    navController: NavController,
+    viewModel: ViewModel,
+    userEmail: String
+) {
     var score by remember { mutableIntStateOf(0) }
     var timeLeft by remember { mutableIntStateOf(30) }
     var currentTrash by remember { mutableStateOf<Pair<Int, Boolean>?>(null) }
     var isGameOver by remember { mutableStateOf(false) }
 
+    // 記錄本次遊戲是否已經將分數加入總分
+    var hasAddedScore by remember { mutableStateOf(false) }
 
     // 答題記錄
     var answerRecords by remember { mutableStateOf<List<AnswerRecord>>(emptyList()) }
@@ -251,6 +257,15 @@ fun GarbageGameScreen(navController: NavController) {
         if (showScoreChange) {
             delay(800L)
             showScoreChange = false
+        }
+    }
+
+    // 在遊戲結束時，將分數加入 ViewModel 的總分
+    LaunchedEffect(isGameOver) {
+        if (isGameOver && !hasAddedScore && score > 0) {
+            viewModel.updateTotalScore(score)
+            viewModel.saveDailyChallengeToFirebase(userEmail)
+            hasAddedScore = true
         }
     }
 
@@ -687,12 +702,13 @@ fun GarbageGameScreen(navController: NavController) {
                         answerRecords = emptyList()
                         correctCount = 0
                         wrongCount = 0
+                        hasAddedScore = false
                         currentTrash = trashList.random()
                     },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFD2E9FF),
                             contentColor = Color(0xFF336666)
-                        ) // ← 就加在這裡！
+                        )
                     ) {
                         Text("重新開始", fontSize = 18.sp)
                     }
@@ -707,9 +723,12 @@ fun GarbageGameScreen(navController: NavController) {
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFD2E9FF),
                             contentColor = Color(0xFF336666)
-                        ) // ← 就加在這裡！
+                        )
                     ) {
-                        Text("返回主選單", fontSize = 18.sp)}}}}}}
-
-
-
+                        Text("返回主選單", fontSize = 18.sp)
+                    }
+                }
+            }
+        }
+    }
+}

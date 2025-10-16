@@ -68,7 +68,12 @@ fun AppNavigation(context: Context) {
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
         composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
         composable("turn") { TurnScreen(navController) }
-        composable("Garbagegame") { GarbageGameScreen(navController) }
+        composable("Garbagegame") { GarbageGameScreen(
+            navController = navController,
+            viewModel = viewModel,
+            userEmail = userEmail
+        )
+        }
     }
 }
 
