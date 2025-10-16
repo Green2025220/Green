@@ -74,6 +74,9 @@ fun AppNavigation(context: Context) {
             userEmail = userEmail
         )
         }
+        composable("garbage") {
+            GarbageScreen(navController)
+        }
     }
 }
 

@@ -101,12 +101,12 @@ fun SconeScreen(navController: NavController) {
                 ) { navController.navigate("calculator") }
 
                 ImageButton(
-                    resId = R.drawable.everydaybtn,
-                    contentDescription = "每日綠色挑戰",
+                    resId = R.drawable.garbagebtn,
+                    contentDescription = "垃圾分類",
                     modifier = Modifier
                         .align(Alignment.Center)
                         .offset(x = 100.dp, y = 80.dp)
-                ) { navController.navigate("everyday") }
+                ) { navController.navigate("garbage") }
 
                 ImageButton(
                     resId = R.drawable.storebtn,
