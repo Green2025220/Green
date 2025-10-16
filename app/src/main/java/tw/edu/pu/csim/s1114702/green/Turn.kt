@@ -569,7 +569,6 @@ class TurnViewModel : ViewModel() {
         }
     }
 
-
     private fun resumeTimer() {
         if (!timerRunning) {
             timerRunning = true
