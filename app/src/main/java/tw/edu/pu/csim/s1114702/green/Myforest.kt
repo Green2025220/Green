@@ -73,7 +73,7 @@ fun getImageResourceForItem(name: String): Int {
 
 
 @Composable
-fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
+fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail: String = "user@example.com") {
     val backgroundImage = painterResource(id = R.drawable.grassland)
     val context = LocalContext.current
 
@@ -93,7 +93,8 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
 
     // 從 Firebase 載入已放置的物品
     LaunchedEffect(Unit) {
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: "user@example.com"
+        //val email = FirebaseAuth.getInstance().currentUser?.email ?: "user@example.com"
+        val email = userEmail.ifEmpty { "user@example.com" }
         viewModel.loadPlacedItemsFromFirebase(email) { loadedItems ->
             placedItems = loadedItems
             // 更新已使用的物品數量
@@ -139,7 +140,8 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel) {
         ) {
             Button(
                 onClick = {
-                    val email = FirebaseAuth.getInstance().currentUser?.email ?: "user@example.com"
+                    val email = userEmail.ifEmpty { "user@example.com" }
+                    //val email = FirebaseAuth.getInstance().currentUser?.email ?: "user@example.com"
                     // 保存草地上物品的位置到 Firebase
                     viewModel.savePlacedItemsToFirebase(email, placedItems)
                     Toast.makeText(context, "位置已儲存", Toast.LENGTH_SHORT).show()
