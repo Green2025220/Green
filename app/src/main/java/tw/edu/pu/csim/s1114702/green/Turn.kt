@@ -384,6 +384,7 @@ data class Card(
     var isMatched: Boolean = false
 )
 
+
 // ---------- MatchedPair 資料類 ----------
 data class MatchedPair(
     val aImageRes: Int,
