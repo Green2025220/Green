@@ -1,5 +1,6 @@
 package tw.edu.pu.csim.s1114702.green
 
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
@@ -7,11 +8,10 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,68 +20,61 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
-import android.content.Context
-import androidx.compose.foundation.background
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
+import com.google.android.gms.location.*
+
 
 @Composable
-fun MotorScreen(navController: NavController, context: Context) {
+fun MotorScreen(navController: NavController) {
+    val context = LocalContext.current
+
 
     var totalCarbonEmission by remember { mutableStateOf(0.0) }
     var currentSpeed by remember { mutableStateOf(0f) }
     var showPermissionDialog by remember { mutableStateOf(false) }
     var isCalculating by remember { mutableStateOf(false) }
-
     var totalDistance by remember { mutableStateOf(0.0) }
     var lastLocation by remember { mutableStateOf<Location?>(null) }
+
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = RequestPermission(),
         onResult = { isGranted ->
-            if (!isGranted) {
-                showPermissionDialog = true
-            }
+            if (!isGranted) showPermissionDialog = true
         }
     )
+
 
     LaunchedEffect(Unit) {
         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
+
     val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
+
     val locationCallback = remember {
         object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
+            override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
-                locationResult?.lastLocation?.let { location ->
-                    currentSpeed = location.speed  // 更新速度 (m/s)
-
+                locationResult.lastLocation?.let { location ->
+                    currentSpeed = location.speed
                     if (isCalculating) {
                         lastLocation?.let { prevLocation ->
-                            val distance = prevLocation.distanceTo(location) / 1000.0 // 轉為公里
+                            val distance = prevLocation.distanceTo(location) / 1000.0
                             totalDistance += distance
                         }
                         lastLocation = location
                     }
-
-                    Log.d(
-                        "LocationUpdate",
-                        "Speed: ${currentSpeed * 3.6}, Distance: $totalDistance km"
-                    )
+                    Log.d("LocationUpdate", "Speed: ${currentSpeed * 3.6}, Distance: $totalDistance km")
                 }
             }
         }
     }
+
 
     LaunchedEffect(Unit) {
         if (ActivityCompat.checkSelfPermission(
@@ -98,12 +91,13 @@ fun MotorScreen(navController: NavController, context: Context) {
         }
     }
 
+
     fun calculateCarbonEmission() {
         val fuelEfficiency = 0.033  // 每公里油耗 (L/km)
-        val carbonPerLiter = 2.31  // 每公升燃油的 CO2 排放量 (kg/L)
-
+        val carbonPerLiter = 2.31   // 每公升燃油的 CO2 排放量 (kg/L)
         totalCarbonEmission = totalDistance * fuelEfficiency * carbonPerLiter
     }
+
 
     if (showPermissionDialog) {
         AlertDialog(
@@ -118,87 +112,83 @@ fun MotorScreen(navController: NavController, context: Context) {
         )
     }
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFA0D6A1)) // 淺綠色背景
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.road2),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 30.dp),
-            verticalArrangement = Arrangement.Top,  // 讓內容從上方開始排列
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            // **返回箭頭 + 標題**
+        ) {
+            // 返回箭頭 + 標題
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
             ) {
-                // **返回按鈕靠左**
                 Image(
-                    painter = painterResource(id = R.drawable.backarrow), // 確保 R.drawable.backarrow 存在
+                    painter = painterResource(id = R.drawable.backarrow),
                     contentDescription = "Back",
                     modifier = Modifier
-                        .size(40.dp) // 設定返回按鈕大小
-                        .align(Alignment.CenterStart) // **對齊 Box 左側**
-                        .clickable { navController.popBackStack() } // 點擊返回上一頁
+                        .size(40.dp)
+                        .align(Alignment.CenterStart)
+                        .clickable { navController.popBackStack() }
                 )
-
-                // **標題置中**
                 Text(
-                    text = "綠  森  友",
+                    text = "綠 森 友",
                     fontSize = 28.sp,
-                    color = Color(0xFF005500), // 深綠色
-                    modifier = Modifier.align(Alignment.Center) // **文字置中**
+                    color = Color(0xFF005500),
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
 
+
             Spacer(modifier = Modifier.height(8.dp))
 
-            // **橫線**
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth() // 橫線貼齊左右
-                    .height(4.dp) // 設定線條厚度
-                    .background(Color(0xFF005500))
-            )
 
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                    .fillMaxWidth()
+                    .offset(y = 10.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("中型機車碳排放計算器", fontSize = 24.sp, color = Color.Black)
 
+
                 Spacer(modifier = Modifier.height(16.dp))
 
+
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(0.9f),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
-                        // 🚀 **當前速度顯示為整數**
                         Text(
                             text = "當前速度: ${currentSpeed.times(3.6).toInt()} 公里/小時",
                             fontSize = 18.sp,
                             color = Color.Black
                         )
-
                         Text(
                             text = "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
                             fontSize = 18.sp,
                             color = Color.Black
                         )
-
                         Text(
                             text = "總碳排放量: ${String.format("%.2f", totalCarbonEmission)} 公斤 CO₂",
                             fontSize = 18.sp,
@@ -206,7 +196,10 @@ fun MotorScreen(navController: NavController, context: Context) {
                         )
                     }
                 }
+
+
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 Button(
                     onClick = {
@@ -220,11 +213,23 @@ fun MotorScreen(navController: NavController, context: Context) {
                             lastLocation = null
                         }
                     },
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2CA673))
                 ) {
                     Text(if (isCalculating) "停止計算" else "開始計算")
                 }
             }
+
+
+            Image(
+                painter = painterResource(id = R.drawable.scooter2),
+                contentDescription = "Scooter",
+                modifier = Modifier
+                    .size(250.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .offset(y = 35.dp)
+            )
         }
     }
 }
+
