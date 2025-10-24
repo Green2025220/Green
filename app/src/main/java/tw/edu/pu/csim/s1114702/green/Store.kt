@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,22 +21,30 @@ import androidx.navigation.NavController
 @Composable
 fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
     val storeItems = listOf(
-        Triple(R.drawable.watering, "澆水器", 5),
-        Triple(R.drawable.scissors, "剪刀", 3),
-        Triple(R.drawable.rake, "三叉", 8),
-        Triple(R.drawable.shovel, "鏟子", 8),
-        Triple(R.drawable.tree1, "青楓", 30),
-        Triple(R.drawable.tree2, "牧野氏山芙蓉", 30),
-        Triple(R.drawable.tree3, "台灣牛樟", 30),
-        Triple(R.drawable.tree4, "截萼黃槿", 30),
+        StoreItem(R.drawable.s1, "澆水器", 5, R.drawable.watering),
+        StoreItem(R.drawable.s14, "剪刀", 3, R.drawable.scissors),
+        StoreItem(R.drawable.s12, "三叉", 8, R.drawable.rake),
+        StoreItem(R.drawable.s13, "鏟子", 8, R.drawable.shovel),
+        StoreItem(R.drawable.s39, "青楓", 30, R.drawable.tree1),
+        StoreItem(R.drawable.s3, "牧野氏山芙蓉", 30, R.drawable.tree2),
+        StoreItem(R.drawable.s37, "台灣牛樟", 30, R.drawable.tree3),
+        StoreItem(R.drawable.s40, "截萼黃槿", 30, R.drawable.tree4),
 
         )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFA0D6A1))
     ) {
+
+        // 背景圖片
+        Image(
+            painter = painterResource(id = R.drawable.storebg),
+            contentDescription = "Store Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop  // 或使用 ContentScale.FillBounds
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -96,16 +105,15 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
                 contentPadding = PaddingValues(bottom = 30.dp)
             ) {
                 items(storeItems) { item ->
-                    val isRedeemed = viewModel.redeemedItems.contains(item.second)
+                    val isRedeemed = viewModel.redeemedItems.contains(item.itemName)
 
                     StoreButton(
-                        imageRes = item.first,
-                        name = item.second,
-                        score = item.third,
+                        storeImageRes = item.storeImageRes,
+                        itemName = item.itemName,
+                        score = item.score,
                         isRedeemed = isRedeemed,
                         onClick = {
-                            if (!isRedeemed && viewModel.redeemItem(item.second, item.third)) {
-//                                viewModel.updateTotalScore(viewModel.totalScore)
+                            if (!isRedeemed && viewModel.redeemItem(item.itemName, item.score)) {
                                 viewModel.saveDailyChallengeToFirebase(userEmail)
                             }
                         }
@@ -116,39 +124,52 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
     }
 }
 
+// 數據類：儲存商店物品訊息
+data class StoreItem(
+    val storeImageRes: Int,      // 商店顯示的新圖片 (s1.png, s2.png, etc.)
+    val itemName: String,         // 物品名稱（用於 Myforest 連接）
+    val score: Int,               // 兌換所需分數
+    val forestImageRes: Int       // Myforest 中使用的原圖片
+)
+
 @Composable
 fun StoreButton(
-    imageRes: Int,
-    name: String,
+    storeImageRes: Int,
+    itemName: String,
     score: Int,
     isRedeemed: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isRedeemed) Color.LightGray else Color(0xFFDDEEDD)
-    val textColor = if (isRedeemed) Color.DarkGray else Color.Black
-
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .aspectRatio(1f)  // 保持正方形比例
             .then(if (!isRedeemed) Modifier.clickable { onClick() } else Modifier)
-            .background(bgColor)
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color.Transparent),
+        contentAlignment = Alignment.Center
     ) {
+        // 顯示商店圖片（已包含名稱和價格）
         Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = name,
-            modifier = Modifier.size(64.dp)
+            painter = painterResource(id = storeImageRes),
+            contentDescription = itemName,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(text = name, fontSize = 20.sp, color = textColor)
-        Text(text = "${score}分", fontSize = 18.sp, color = textColor)
 
+        // 如果已兌換，顯示半透明遮罩和文字
         if (isRedeemed) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "已兌換", fontSize = 16.sp, color = Color.Red)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "已兌換",
+                    fontSize = 24.sp,
+                    color = Color.White
+                )
+            }
         }
     }
 }
