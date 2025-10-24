@@ -21,10 +21,10 @@ import androidx.navigation.NavController
 @Composable
 fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
     val storeItems = listOf(
-        StoreItem(R.drawable.s1, "澆水器", 5, R.drawable.watering),
-        StoreItem(R.drawable.s14, "剪刀", 3, R.drawable.scissors),
-        StoreItem(R.drawable.s12, "三叉", 8, R.drawable.rake),
-        StoreItem(R.drawable.s13, "鏟子", 8, R.drawable.shovel),
+        StoreItem(R.drawable.s1, "澆水器", 10, R.drawable.watering),
+        StoreItem(R.drawable.s14, "剪刀", 20, R.drawable.scissors),
+        StoreItem(R.drawable.s12, "三叉", 30, R.drawable.rake),
+        StoreItem(R.drawable.s13, "鏟子", 10, R.drawable.shovel),
         StoreItem(R.drawable.s39, "青楓", 30, R.drawable.tree1),
         StoreItem(R.drawable.s3, "牧野氏山芙蓉", 30, R.drawable.tree2),
         StoreItem(R.drawable.s37, "台灣牛樟", 30, R.drawable.tree3),
