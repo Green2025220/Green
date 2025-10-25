@@ -49,7 +49,47 @@ fun getBasketItemsFromStore(redeemedItems: List<String>): Map<String, Int> {
         "青楓" to redeemedItems.count { it == "青楓" },
         "牧野氏山芙蓉" to redeemedItems.count { it == "牧野氏山芙蓉" },
         "台灣牛樟" to redeemedItems.count { it == "台灣牛樟" },
-        "截萼黃槿" to redeemedItems.count { it == "截萼黃槿" }
+        "截萼黃槿" to redeemedItems.count { it == "截萼黃槿" },
+        "柵欄1" to redeemedItems.count { it == "柵欄1" },
+        "柵欄2" to redeemedItems.count { it == "柵欄2" },
+        "柵欄3" to redeemedItems.count { it == "柵欄3" },
+        "柵欄4" to redeemedItems.count { it == "柵欄4" },
+        "太陽" to redeemedItems.count { it == "太陽" },
+        "拖拉機" to redeemedItems.count { it == "拖拉機" },
+        "風車" to redeemedItems.count { it == "風車" },
+        "帽子" to redeemedItems.count { it == "帽子" },
+        "小苒" to redeemedItems.count { it == "小苒" },
+        "小薇" to redeemedItems.count { it == "小薇" },
+        "小浩" to redeemedItems.count { it == "小浩" },
+        "農夫" to redeemedItems.count { it == "農夫" },
+        "狐狸" to redeemedItems.count { it == "狐狸" },
+        "兔子" to redeemedItems.count { it == "兔子" },
+        "蝴蝶" to redeemedItems.count { it == "蝴蝶" },
+        "黃雛菊" to redeemedItems.count { it == "黃雛菊" },
+        "台灣火刺木" to redeemedItems.count { it == "台灣火刺木" },
+        "白雛菊" to redeemedItems.count { it == "白雛菊" },
+        "香雪蘭" to redeemedItems.count { it == "香雪蘭" },
+        "向日葵" to redeemedItems.count { it == "向日葵" },
+        "鬱金香" to redeemedItems.count { it == "鬱金香" },
+        "法國菊" to redeemedItems.count { it == "法國菊" },
+        "松樹牛肝菌" to redeemedItems.count { it == "松樹牛肝菌" },
+        "山紅菇" to redeemedItems.count { it == "山紅菇" },
+        "鈴蘭" to redeemedItems.count { it == "鈴蘭" },
+        "薰衣草" to redeemedItems.count { it == "薰衣草" },
+        "風信子" to redeemedItems.count { it == "風信子" },
+        "玉米" to redeemedItems.count { it == "玉米" },
+        "樹苗" to redeemedItems.count { it == "樹苗" },
+        "種子" to redeemedItems.count { it == "種子" },
+        "粉色蘭花" to redeemedItems.count { it == "粉色蘭花" },
+        "花圃" to redeemedItems.count { it == "花圃" },
+        "台灣欒樹" to redeemedItems.count { it == "台灣欒樹" },
+        "蘋果樹" to redeemedItems.count { it == "蘋果樹" },
+        "綠樹" to redeemedItems.count { it == "綠樹" },
+        "松樹" to redeemedItems.count { it == "松樹" },
+        "玫瑰叢" to redeemedItems.count { it == "玫瑰叢" },
+        "櫻花樹" to redeemedItems.count { it == "櫻花樹" },
+        "銀杏樹" to redeemedItems.count { it == "銀杏樹" }
+
     )
 }
 
@@ -65,6 +105,45 @@ fun getImageResourceForItem(name: String): Int {
         "牧野氏山芙蓉" -> R.drawable.tree2
         "台灣牛樟" -> R.drawable.tree3
         "截萼黃槿" -> R.drawable.tree4
+        "柵欄1" -> R.drawable.fence1
+        "柵欄2" -> R.drawable.fence2
+        "柵欄3" -> R.drawable.fence3
+        "柵欄4" -> R.drawable.fence4
+        "太陽" -> R.drawable.sun
+        "拖拉機" -> R.drawable.tractor
+        "風車" -> R.drawable.windmill
+        "帽子" -> R.drawable.hat
+        "小苒" -> R.drawable.girl1
+        "小薇" -> R.drawable.girl2
+        "小浩" -> R.drawable.boy1
+        "農夫" -> R.drawable.boy2
+        "狐狸" -> R.drawable.fox
+        "兔子" -> R.drawable.rabbit
+        "蝴蝶" -> R.drawable.butterfly
+        "黃雛菊" -> R.drawable.yellowdaisy
+        "台灣火刺木" -> R.drawable.tree9
+        "白雛菊" -> R.drawable.twoflower
+        "香雪蘭" -> R.drawable.tulip
+        "向日葵" -> R.drawable.sunflower
+        "鬱金香" -> R.drawable.flower2
+        "法國菊" -> R.drawable.oneflower
+        "松樹牛肝菌" -> R.drawable.mushroom2
+        "山紅菇" -> R.drawable.mushroom1
+        "鈴蘭" -> R.drawable.lilyofthevalley
+        "薰衣草" -> R.drawable.lavender
+        "風信子" -> R.drawable.hyacinth
+        "玉米" -> R.drawable.corn
+        "樹苗" -> R.drawable.bud
+        "種子" -> R.drawable.seed35
+        "粉色蘭花" -> R.drawable.flower1
+        "花圃" -> R.drawable.flower38
+        "台灣欒樹" -> R.drawable.tree10
+        "蘋果樹" -> R.drawable.tree11
+        "綠樹" -> R.drawable.tree6
+        "松樹" -> R.drawable.tree5
+        "玫瑰叢" -> R.drawable.rosebush
+        "櫻花樹" -> R.drawable.tree7
+        "銀杏樹" -> R.drawable.tree8
         else -> R.drawable.tree4
     }
 }
