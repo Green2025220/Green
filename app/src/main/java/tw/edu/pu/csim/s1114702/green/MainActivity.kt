@@ -26,6 +26,9 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 import java.security.MessageDigest
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 
 
 class MainActivity : ComponentActivity() {
@@ -136,6 +139,8 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("密碼(6碼)") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.width(250.dp)
             )
 
