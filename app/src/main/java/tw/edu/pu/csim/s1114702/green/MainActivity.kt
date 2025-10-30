@@ -151,29 +151,30 @@ fun LoginScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly // 讓兩個按鈕平均分布
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // 登入按鈕（圖片）
-                Button(onClick = {
-                    loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
-                }) {
-                    Image(
-                        painter = painterResource(id = R.drawable.tree), // 登入圖片
-                        contentDescription = "登入",
-                        modifier = Modifier.size(60.dp) // 調整圖片大小
-                    )
-                }
+                // 註冊按鈕（圖片）- 左邊
+                Image(
+                    painter = painterResource(id = R.drawable.sign), // 註冊圖片
+                    contentDescription = "註冊",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clickable {
+                            registerUser(email, password, context, db)
+                        }
+                )
 
-                // 註冊按鈕（圖片）
-                Button(onClick = {
-                    registerUser(email, password, context, db)
-                }) {
-                    Image(
-                        painter = painterResource(id = R.drawable.leaf), // 註冊圖片
-                        contentDescription = "註冊",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
+                // 登入按鈕（圖片）- 右邊
+                Image(
+                    painter = painterResource(id = R.drawable.login), // 登入圖片
+                    contentDescription = "登入",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clickable {
+                            loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
+                        }
+                )
             }
 
             errorMessage?.let {
