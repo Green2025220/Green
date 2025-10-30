@@ -37,20 +37,25 @@ fun SconeScreen(navController: NavController) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 返回箭頭 + 標題
+            // 登出按鈕 + 標題
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
             ) {
-                // 返回按鈕靠左
-                Image(
-                    painter = painterResource(id = R.drawable.backarrow),
-                    contentDescription = "Back",
+                // 登出按鈕靠左
+                Text(
+                    text = "登出",
+                    fontSize = 15.sp,
+                    color = Color(0xFF005500),
                     modifier = Modifier
-                        .size(40.dp)
                         .align(Alignment.CenterStart)
                         .clickable { navController.popBackStack() }
+                        .background(
+                            color = Color(0xFFE8F5E9),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
                 // 標題置中

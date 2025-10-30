@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
@@ -27,13 +26,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.text.font.FontWeight
 
 
 @Composable
 fun TurnScreen(
     navController: NavController,
+    viewModel: ViewModel,
+    userEmail: String,
     turnViewModel: TurnViewModel = viewModel()
 ) {
     val cards = turnViewModel.cards
@@ -42,6 +43,7 @@ fun TurnScreen(
     val elapsedTime by turnViewModel.elapsedTime
     val showMatchedCard by turnViewModel.showMatchedCard
     val matchedCardImageRes by turnViewModel.matchedCardImageRes
+    val score by turnViewModel.score
 
 
     LaunchedEffect(Unit) {
@@ -70,6 +72,12 @@ fun TurnScreen(
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
 
+    // 當遊戲完成時，自動加分（只執行一次）
+    LaunchedEffect(pairsFound) {
+        if (pairsFound == cards.size / 2) {
+            turnViewModel.addScoreToViewModel(viewModel, userEmail)
+        }
+    }
 
     if (pairsFound == cards.size / 2) {
         // 遊戲完成頁面
@@ -82,19 +90,42 @@ fun TurnScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("恭喜您完成挑戰！", fontSize = 28.sp, color = Color.Black)
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFCAFFFF),
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                Text("恭喜您完成挑戰！", fontSize = 28.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 用時和分數顯示在同一行
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("用時: ${minutes}m ${seconds}s", fontSize = 24.sp)
+                    // 用時顯示
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFCAFFFF),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                    ) {
+                        Text("用時: ${minutes}m ${seconds}s", fontSize = 20.sp, color = Color.Black)
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // 分數顯示（樣式和用時一樣）
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFCAFFFF),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                    ) {
+                        Text("獲得分數: $score 分", fontSize = 20.sp, color = Color.Black)
+                    }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // 水平滾動的配對卡牌列表
                 Row(
@@ -109,7 +140,7 @@ fun TurnScreen(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     turnViewModel.matchedPairs.forEach { pair ->
-                        // 每一組卡牌的容器（放大）
+                        // 每一組卡牌的容器
                         Column(
                             modifier = Modifier
                                 .width(220.dp)
@@ -120,7 +151,7 @@ fun TurnScreen(
                                 .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // a 和 b 圖片並排在上方（放大）
+                            // a 和 b 圖片並排在上方
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
@@ -142,7 +173,7 @@ fun TurnScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // c 圖片在下方（更大）
+                            // c 圖片在下方
                             Image(
                                 painter = painterResource(id = pair.cImageRes),
                                 contentDescription = "C Card",
@@ -297,11 +328,11 @@ fun FireworksEffect() {
             hasTriggered = true
             // 從左右兩側同時發射 5 組煙火
             val launches = listOf(
-                Triple(0.15f, 0.3f, 0L),    // 左側第一發
-                Triple(0.85f, 0.25f, 300L), // 右側第一發
-                Triple(0.25f, 0.35f, 600L), // 左側第二發
-                Triple(0.75f, 0.3f, 900L),  // 右側第二發
-                Triple(0.5f, 0.2f, 1200L)   // 中間最後一發
+                Triple(0.15f, 0.3f, 0L),
+                Triple(0.85f, 0.25f, 300L),
+                Triple(0.25f, 0.35f, 600L),
+                Triple(0.75f, 0.3f, 900L),
+                Triple(0.5f, 0.2f, 1200L)
             )
 
             launches.forEach { (xPos, yPos, delayTime) ->
@@ -316,12 +347,12 @@ fun FireworksEffect() {
                             vx = kotlin.math.cos(angle) * speed,
                             vy = kotlin.math.sin(angle) * speed,
                             color = listOf(
-                                Color(0xFFFFD700), // 金色
-                                Color(0xFFFF6B6B), // 紅色
-                                Color(0xFF4ECDC4), // 青色
-                                Color(0xFFFFE66D), // 黃色
-                                Color(0xFFFF69B4), // 粉紅色
-                                Color(0xFF95E1D3)  // 薄荷綠
+                                Color(0xFFFFD700),
+                                Color(0xFFFF6B6B),
+                                Color(0xFF4ECDC4),
+                                Color(0xFFFFE66D),
+                                Color(0xFFFF69B4),
+                                Color(0xFF95E1D3)
                             ).random(),
                             life = 1f,
                             size = Random.nextFloat() * 4f + 4f
@@ -335,14 +366,14 @@ fun FireworksEffect() {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(16) // 60 FPS
+            delay(16)
             particles = particles.mapNotNull { particle ->
                 val newLife = particle.life - 0.015f
                 if (newLife <= 0f) null
                 else particle.copy(
                     x = particle.x + particle.vx,
                     y = particle.y + particle.vy,
-                    vy = particle.vy + 0.0008f, // 重力效果
+                    vy = particle.vy + 0.0008f,
                     life = newLife
                 )
             }
@@ -379,7 +410,7 @@ data class Card(
     val id: Int,
     val content: String,
     val imageRes: Int,
-    val pairIndex: Int, // 新增：記錄是第幾對（用來對應 c 系列圖片）
+    val pairIndex: Int,
     var isFlipped: Boolean = false,
     var isMatched: Boolean = false
 )
@@ -395,7 +426,7 @@ data class MatchedPair(
 
 
 // ---------- TurnViewModel ----------
-class TurnViewModel : ViewModel() {
+class TurnViewModel : androidx.lifecycle.ViewModel() {
     private val aImages = listOf(
         R.drawable.a1, R.drawable.a2, R.drawable.a3, R.drawable.a4,
         R.drawable.a5, R.drawable.a6, R.drawable.a7, R.drawable.a8,
@@ -423,11 +454,14 @@ class TurnViewModel : ViewModel() {
     var elapsedTime = mutableStateOf(0L)
     var showMatchedCard = mutableStateOf(false)
     var matchedCardImageRes = mutableStateOf<Int?>(null)
-    val matchedPairs = mutableStateListOf<MatchedPair>() // 記錄所有配對成功的組合
+    var score = mutableStateOf(0)
+    val matchedPairs = mutableStateListOf<MatchedPair>()
+
+    private var scoreAdded = false
 
     private var startTime = 0L
     private var timerRunning = false
-    private var pausedTime = 0L // 記錄暫停時的累計時間（不需要 mutableStateOf）
+    private var pausedTime = 0L
 
 
     init {
@@ -438,61 +472,59 @@ class TurnViewModel : ViewModel() {
     fun resetGame() {
         cards.clear()
 
-
-        // 確保 a、b、c 的圖片數量一致
         require(aImages.size == bImages.size && bImages.size == cImages.size) {
             "aImages、bImages 和 cImages 數量不一致！"
         }
 
-
-        // 從所有可用對中隨機抽 6 對
         val selectedIndices = aImages.indices.shuffled().take(6)
-
-
         val pairs = mutableListOf<Card>()
 
-
         selectedIndices.forEach { i ->
-            // aX 對應 bX，強制配對，並記錄 pairIndex
             val aCard = Card(id = i * 2, content = "pair$i", imageRes = aImages[i], pairIndex = i)
             val bCard = Card(id = i * 2 + 1, content = "pair$i", imageRes = bImages[i], pairIndex = i)
             pairs.add(aCard)
             pairs.add(bCard)
-
-
-            println("抽到配對：a${i + 1} ↔ b${i + 1} (content=${aCard.content})")
         }
 
-
-        // 打亂整個棋盤順序
         cards.addAll(pairs.shuffled())
 
-
-        println("棋盤順序：")
-        cards.forEachIndexed { index, card ->
-            println("Index $index -> id=${card.id}, content=${card.content}, pairIndex=${card.pairIndex}")
-        }
-
-
-        // 重置狀態
         firstFlippedIndex.value = null
         lockBoard.value = false
         pairsFound.value = 0
         elapsedTime.value = 0L
-        pausedTime = 0L // 直接賦值，不是 .value
+        pausedTime = 0L
         timerRunning = false
         showMatchedCard.value = false
         matchedCardImageRes.value = null
-        matchedPairs.clear() // 清空配對記錄
+        score.value = 0
+        scoreAdded = false
+        matchedPairs.clear()
+    }
+
+    private fun calculateScore(timeInMillis: Long): Int {
+        val totalSeconds = timeInMillis / 1000
+        return when {
+            totalSeconds <= 30 -> 30
+            totalSeconds <= 60 -> 20
+            totalSeconds <= 90 -> 10
+            else -> 5
+        }
+    }
+
+    fun addScoreToViewModel(sharedViewModel: ViewModel, userEmail: String) {
+        if (!scoreAdded && score.value > 0) {
+            sharedViewModel.updateTotalScore(score.value)
+            sharedViewModel.saveDailyChallengeToFirebase(userEmail)
+            scoreAdded = true
+            println("Turn 遊戲分數已加到總分：+${score.value}")
+        }
     }
 
 
     fun flipCard(index: Int) {
         if (lockBoard.value || cards[index].isFlipped || cards[index].isMatched) return
 
-
         cards[index].isFlipped = true
-
 
         val prevIndex = firstFlippedIndex.value
         if (prevIndex == null) {
@@ -500,12 +532,10 @@ class TurnViewModel : ViewModel() {
             if (!timerRunning) startTimer()
         } else {
             if (cards[prevIndex].content == cards[index].content) {
-                // 配對成功
                 cards[prevIndex].isMatched = true
                 cards[index].isMatched = true
                 pairsFound.value++
 
-                // 記錄配對成功的組合
                 val pairIndex = cards[index].pairIndex
                 val matchedPair = MatchedPair(
                     aImageRes = aImages[pairIndex],
@@ -515,20 +545,21 @@ class TurnViewModel : ViewModel() {
                 )
                 matchedPairs.add(matchedPair)
 
-                // 暫停計時
                 pauseTimer()
 
-                // 顯示對應的 c 系列卡牌
-                matchedCardImageRes.value = cImages[pairIndex]
-                showMatchedCard.value = true
+                // 延遲 2 秒後顯示對應的 c 系列卡牌
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(1000)
+                    matchedCardImageRes.value = cImages[pairIndex]
+                    showMatchedCard.value = true
+                }
 
-                // 如果遊戲已完成，停止計時
                 if (pairsFound.value == cards.size / 2) {
                     timerRunning = false
+                    score.value = calculateScore(elapsedTime.value)
                 }
 
             } else {
-                // 配對失敗，延遲翻回
                 lockBoard.value = true
                 CoroutineScope(Dispatchers.Main).launch {
                     delay(800)
@@ -545,7 +576,6 @@ class TurnViewModel : ViewModel() {
         showMatchedCard.value = false
         matchedCardImageRes.value = null
 
-        // 繼續計時（如果遊戲未結束）
         if (pairsFound.value < cards.size / 2) {
             resumeTimer()
         }

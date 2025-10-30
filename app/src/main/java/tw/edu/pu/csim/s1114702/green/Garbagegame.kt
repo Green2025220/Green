@@ -58,8 +58,9 @@ fun GarbageGameScreen(
     var wrongCount by remember { mutableIntStateOf(0) }
 
 
+// 題庫池和索引
     var trashPool by remember { mutableStateOf<List<Pair<Int, Boolean>>>(emptyList()) }
-
+    var currentPoolIndex by remember { mutableIntStateOf(0) }
 
     // 拖曳相關狀態
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
@@ -223,13 +224,26 @@ fun GarbageGameScreen(
             R.drawable.r_zipperbag -> "夾鏈袋"
             else -> "未知垃圾"
         }
+
+    }
+    // 取得下一個題目（不重複）
+    fun getNextTrash() {
+        currentPoolIndex++
+        if (currentPoolIndex >= trashPool.size) {
+            // 題庫用完，重新洗牌
+            trashPool = trashList.shuffled()
+            currentPoolIndex = 0
+        }
+        currentTrash = trashPool[currentPoolIndex]
     }
 
-
-    // 初始化垃圾
+// 初始化垃圾題庫池
     LaunchedEffect(Unit) {
-        currentTrash = trashList.random()
+        trashPool = trashList.shuffled()
+        currentPoolIndex = 0
+        currentTrash = trashPool[currentPoolIndex]
     }
+
 
 
     // 倒數計時
@@ -437,7 +451,7 @@ fun GarbageGameScreen(
                                                         feedbackMessage = "✓ 答對了！"
                                                         feedbackColor = Color(0xFF4CAF50)
                                                         showFeedback = true
-                                                        currentTrash = trashList.random()
+                                                        getNextTrash()
                                                     }
                                                     inRecycleBin && trash.second -> {
                                                         // 正確丟入回收桶
@@ -454,7 +468,7 @@ fun GarbageGameScreen(
                                                         feedbackMessage = "✓ 答對了！"
                                                         feedbackColor = Color(0xFF4CAF50)
                                                         showFeedback = true
-                                                        currentTrash = trashList.random()
+                                                        getNextTrash()
                                                     }
                                                     inGeneralBin && trash.second -> {
                                                         // 應該回收卻丟一般垃圾桶
@@ -471,7 +485,7 @@ fun GarbageGameScreen(
                                                         feedbackMessage = "✗ 答錯了！"
                                                         feedbackColor = Color(0xFFF44336)
                                                         showFeedback = true
-                                                        currentTrash = trashList.random()
+                                                        getNextTrash()
                                                     }
                                                     inRecycleBin && !trash.second -> {
                                                         // 應該一般垃圾卻丟回收桶
@@ -488,7 +502,7 @@ fun GarbageGameScreen(
                                                         feedbackMessage = "✗ 答錯了！"
                                                         feedbackColor = Color(0xFFF44336)
                                                         showFeedback = true
-                                                        currentTrash = trashList.random()
+                                                        getNextTrash()
                                                     }
                                                 }
 
@@ -703,7 +717,9 @@ fun GarbageGameScreen(
                         correctCount = 0
                         wrongCount = 0
                         hasAddedScore = false
-                        currentTrash = trashList.random()
+                        trashPool = trashList.shuffled()  // 新增
+                        currentPoolIndex = 0              // 新增
+                        currentTrash = trashPool[currentPoolIndex]
                     },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFD2E9FF),

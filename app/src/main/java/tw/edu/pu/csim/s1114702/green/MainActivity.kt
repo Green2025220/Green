@@ -74,7 +74,13 @@ fun AppNavigation() {
         composable("everyday") { EverydayScreen(navController, viewModel) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
         composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
-        composable("turn") { TurnScreen(navController) }
+        composable("turn") {
+            TurnScreen(
+                navController = navController,
+                viewModel = viewModel,
+                userEmail = userEmail
+            )
+        }
         composable("Garbagegame") {
             GarbageGameScreen(
                 navController = navController,
@@ -249,6 +255,3 @@ fun hashPassword(password: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
     return bytes.joinToString("") { "%02x".format(it) }
 }
-
-
-
