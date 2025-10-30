@@ -201,7 +201,7 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
         viewModel.savePlacedItemsToFirebase(email, placedItems)
         initialPlacedItems = placedItems.map { it.copy() }
         hasUnsavedChanges = false
-        Toast.makeText(context, "✓ 位置已儲存", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "位置已儲存", Toast.LENGTH_SHORT).show()
     }
 
     // 返回確認對話框
@@ -222,19 +222,21 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
             },
             confirmButton = {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    modifier = Modifier
+                        .fillMaxWidth(), // 讓 Row 佔滿寬度
+                    horizontalArrangement = Arrangement.Center, // 水平置中
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = { showExitDialog = false }) {
-                        Text("取消", color = Color.Gray)
-                    }
                     TextButton(
                         onClick = {
                             showExitDialog = false
                             navController.popBackStack()
-                        }
+                        },
+                        modifier = Modifier.padding(end = 8.dp) // 按鈕間距
                     ) {
                         Text("不儲存離開", color = Color(0xFFE53935))
                     }
+
                     Button(
                         onClick = {
                             saveChanges()
@@ -251,6 +253,7 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
             containerColor = Color(0xFFE8FFF5)
         )
     }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 背景圖
