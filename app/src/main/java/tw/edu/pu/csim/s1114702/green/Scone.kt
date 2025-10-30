@@ -50,7 +50,9 @@ fun SconeScreen(navController: NavController) {
                     color = Color(0xFF005500),
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .clickable { navController.popBackStack() }
+                        .clickable { navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        } }
                         .background(
                             color = Color(0xFFE8F5E9),
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
