@@ -99,7 +99,8 @@ fun LoginScreen(
     viewModel: ViewModel,
     onLoginSuccess: (String) -> Unit
 ) {
-    val backgroundImage = painterResource(id = R.drawable.greenback)
+    val backgroundImage = painterResource(id = R.drawable.greenback1
+    )
     val treeImage = painterResource(id = R.drawable.logintree)
     val context = LocalContext.current
     val db = FirebaseFirestore.getInstance()
@@ -124,13 +125,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Log in ...",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+
 
 
             TextField(
@@ -154,34 +149,40 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
 
-            Button(onClick = {
-                loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
-            }) {
-                Text("登入")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly // 讓兩個按鈕平均分布
+            ) {
+                // 登入按鈕（圖片）
+                Button(onClick = {
+                    loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
+                }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.tree), // 登入圖片
+                        contentDescription = "登入",
+                        modifier = Modifier.size(60.dp) // 調整圖片大小
+                    )
+                }
+
+                // 註冊按鈕（圖片）
+                Button(onClick = {
+                    registerUser(email, password, context, db)
+                }) {
+                    Image(
+                        painter = painterResource(id = R.drawable.leaf), // 註冊圖片
+                        contentDescription = "註冊",
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
             }
-
-
-            Button(onClick = { registerUser(email, password, context, db) }) {
-                Text("註冊")
-            }
-
 
             errorMessage?.let {
                 Text(text = it, color = Color.Red, fontSize = 14.sp)
             }
 
 
-            Image(
-                painter = treeImage,
-                contentDescription = "一鍵登入",
-                modifier = Modifier
-                    .size(120.dp)
-                    .clickable {
-                        Toast.makeText(context, "一鍵登入成功！", Toast.LENGTH_SHORT).show()
-                        onLoginSuccess("guest@example.com")
-                        navController.navigate("scone")
-                    }
-            )
+
+
         }
     }
 }
