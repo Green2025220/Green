@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.text.style.TextDecoration
 
 
 class MainActivity : ComponentActivity() {
@@ -219,23 +220,6 @@ fun LoginScreen(
             )
         }
 
-        // 註冊按鈕（葉子圖案）
-        Image(
-            painter = painterResource(id = R.drawable.sign),
-            contentDescription = "註冊",
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(
-                    start = screenWidth * 0.157f,
-                    top = screenHeight * 0.600f
-                )
-                .width(screenWidth * 0.217f)
-                .height(screenHeight * 0.065f)
-                .clickable {
-                    registerUser(email, password, context, db)
-                }
-        )
-
         // 登入按鈕（樹形圖案）
         Image(
             painter = painterResource(id = R.drawable.login),
@@ -244,7 +228,7 @@ fun LoginScreen(
                 .align(Alignment.TopStart)
                 .padding(
                     start = screenWidth * 0.421f,
-                    top = screenHeight * 0.608f
+                    top = screenHeight * 0.588f
                 )
                 .width(screenWidth * 0.144f)
                 .height(screenHeight * 0.075f)
@@ -252,6 +236,28 @@ fun LoginScreen(
                     loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
                 }
         )
+
+        Text(
+            text = "註冊",
+            fontSize = 14.sp,  // 可以調整文字大小
+            fontWeight = FontWeight.Bold,  // 粗體，讓文字更明顯
+            color = Color.DarkGray,
+            style = LocalTextStyle.current.copy(
+                textDecoration = TextDecoration.Underline
+            ),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    start = screenWidth * 0.781f,
+                    top = screenHeight * 0.540f
+                )
+
+                .clickable {
+                    registerUser(email, password, context, db)
+                }
+
+        )
+
 
         // 錯誤訊息
         errorMessage?.let {
