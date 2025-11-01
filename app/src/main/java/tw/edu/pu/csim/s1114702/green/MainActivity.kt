@@ -29,6 +29,7 @@ import java.security.MessageDigest
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalConfiguration
 
 
 class MainActivity : ComponentActivity() {
@@ -74,7 +75,13 @@ fun AppNavigation() {
         composable("everyday") { EverydayScreen(navController, viewModel) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
         composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
-        composable("turn") { TurnScreen(navController) }
+        composable("turn") {
+            TurnScreen(
+                navController = navController,
+                viewModel = viewModel,
+                userEmail = userEmail
+            )
+        }
         composable("Garbagegame") {
             GarbageGameScreen(
                 navController = navController,
@@ -93,18 +100,20 @@ fun LoginScreen(
     viewModel: ViewModel,
     onLoginSuccess: (String) -> Unit
 ) {
-    val backgroundImage = painterResource(id = R.drawable.greenback)
-    val treeImage = painterResource(id = R.drawable.logintree)
+    val backgroundImage = painterResource(id = R.drawable.greenback1)
     val context = LocalContext.current
     val db = FirebaseFirestore.getInstance()
+    val configuration = LocalConfiguration.current
 
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-
     Box(modifier = Modifier.fillMaxSize()) {
+        // 背景圖片
         Image(
             painter = backgroundImage,
             contentDescription = null,
@@ -112,69 +121,83 @@ fun LoginScreen(
             modifier = Modifier.matchParentSize()
         )
 
+        // 帳號輸入框 - Y軸位置為螢幕高度的 28.6% (550/1920)
+        TextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("帳號 (Email)") },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White.copy(alpha = 0.9f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.8f)
+            ),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.286f)
+                .width(screenWidth * 0.657f)  // 710/1080
+                .height(screenHeight * 0.06f)  // 115/1920
+        )
 
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+        // 密碼輸入框 - Y軸位置為螢幕高度的 37.2% (715/1920)
+        TextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("密碼(6碼)") },
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White.copy(alpha = 0.9f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.8f)
+            ),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.372f)
+                .width(screenWidth * 0.657f)
+                .height(screenHeight * 0.06f)
+        )
+
+        // 註冊按鈕（葉子圖案）- 位置為螢幕的 15.7% 左側, 49.5% 上方
+        Image(
+            painter = painterResource(id = R.drawable.sign),
+            contentDescription = "註冊",
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    start = screenWidth * 0.157f,  // 170/1080
+                    top = screenHeight * 0.495f    // 950/1920
+                )
+                .width(screenWidth * 0.217f)  // 235/1080
+                .height(screenHeight * 0.065f)  // 125/1920
+                .clickable {
+                    registerUser(email, password, context, db)
+                }
+        )
+
+        // 登入按鈕（樹形圖案）- 位置為螢幕的 42.1% 左側, 50.3% 上方
+        Image(
+            painter = painterResource(id = R.drawable.login),
+            contentDescription = "登入",
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    start = screenWidth * 0.421f,  // 455/1080
+                    top = screenHeight * 0.503f    // 965/1920
+                )
+                .width(screenWidth * 0.144f)  // 155/1080
+                .height(screenHeight * 0.075f)  // 145/1920
+                .clickable {
+                    loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
+                }
+        )
+
+        // 錯誤訊息
+        errorMessage?.let {
             Text(
-                text = "Log in ...",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-
-            TextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("帳號 (Email)") },
-                modifier = Modifier.width(250.dp)
-            )
-
-
-            TextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("密碼(6碼)") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.width(250.dp)
-            )
-
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            Button(onClick = {
-                loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
-            }) {
-                Text("登入")
-            }
-
-
-            Button(onClick = { registerUser(email, password, context, db) }) {
-                Text("註冊")
-            }
-
-
-            errorMessage?.let {
-                Text(text = it, color = Color.Red, fontSize = 14.sp)
-            }
-
-
-            Image(
-                painter = treeImage,
-                contentDescription = "一鍵登入",
+                text = it,
+                color = Color.Red,
+                fontSize = 14.sp,
                 modifier = Modifier
-                    .size(120.dp)
-                    .clickable {
-                        Toast.makeText(context, "一鍵登入成功！", Toast.LENGTH_SHORT).show()
-                        onLoginSuccess("guest@example.com")
-                        navController.navigate("scone")
-                    }
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 100.dp)
             )
         }
     }
@@ -249,6 +272,3 @@ fun hashPassword(password: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
     return bytes.joinToString("") { "%02x".format(it) }
 }
-
-
-
