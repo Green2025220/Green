@@ -225,7 +225,7 @@ fun CarScreen(navController: NavController) {
                 modifier = Modifier
                     .size(250.dp)
                     .align(Alignment.CenterHorizontally)
-                    .offset(y = 35.dp)
+                    .offset(y = 150.dp)
             )
         }
     }
