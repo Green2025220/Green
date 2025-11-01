@@ -30,6 +30,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.material3.LocalTextStyle
 
 
 class MainActivity : ComponentActivity() {
@@ -121,69 +124,130 @@ fun LoginScreen(
             modifier = Modifier.matchParentSize()
         )
 
-        // 帳號輸入框 - Y軸位置為螢幕高度的 28.6% (550/1920)
-        TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("帳號 (Email)") },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.9f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.8f)
-            ),
+        // 帳號輸入框（使用自訂圖片背景）
+        Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.286f)
-                .width(screenWidth * 0.657f)  // 710/1080
-                .height(screenHeight * 0.06f)  // 115/1920
-        )
-
-        // 密碼輸入框 - Y軸位置為螢幕高度的 37.2% (715/1920)
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("密碼(6碼)") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.9f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.8f)
-            ),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.372f)
+                .padding(top = screenHeight * 0.386f)
                 .width(screenWidth * 0.657f)
-                .height(screenHeight * 0.06f)
-        )
+                .height(screenHeight * 0.08f)
+        ) {
+            // 背景圖片
+            Image(
+                painter = painterResource(id = R.drawable.account),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize()
+            )
 
-        // 註冊按鈕（葉子圖案）- 位置為螢幕的 15.7% 左側, 49.5% 上方
+            // 文字輸入
+            BasicTextField(
+                value = email,
+                onValueChange = { email = it },
+                singleLine = true,
+                textStyle = LocalTextStyle.current.copy(
+                    fontSize = 18.sp,
+                    color = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth()
+                    .padding(start = 55.dp, end = 20.dp),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (email.isEmpty()) {
+                            Text(
+                                text = "(Email)",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+        }
+
+        // 密碼輸入框（使用自訂圖片背景）
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.472f)
+                .width(screenWidth * 0.657f)
+                .height(screenHeight * 0.08f)
+        ) {
+            // 背景圖片
+            Image(
+                painter = painterResource(id = R.drawable.password),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize()
+            )
+
+            // 密碼輸入（使用 PasswordVisualTransformation）
+            BasicTextField(
+                value = password,
+                onValueChange = { password = it },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                textStyle = LocalTextStyle.current.copy(
+                    fontSize = 18.sp,
+                    color = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth()
+                    .padding(start = 55.dp, end = 20.dp),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (password.isEmpty()) {
+                            Text(
+                                text = "(6碼)",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+        }
+
+        // 註冊按鈕（葉子圖案）
         Image(
             painter = painterResource(id = R.drawable.sign),
             contentDescription = "註冊",
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(
-                    start = screenWidth * 0.157f,  // 170/1080
-                    top = screenHeight * 0.495f    // 950/1920
+                    start = screenWidth * 0.157f,
+                    top = screenHeight * 0.595f
                 )
-                .width(screenWidth * 0.217f)  // 235/1080
-                .height(screenHeight * 0.065f)  // 125/1920
+                .width(screenWidth * 0.217f)
+                .height(screenHeight * 0.065f)
                 .clickable {
                     registerUser(email, password, context, db)
                 }
         )
 
-        // 登入按鈕（樹形圖案）- 位置為螢幕的 42.1% 左側, 50.3% 上方
+        // 登入按鈕（樹形圖案）
         Image(
             painter = painterResource(id = R.drawable.login),
             contentDescription = "登入",
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(
-                    start = screenWidth * 0.421f,  // 455/1080
-                    top = screenHeight * 0.503f    // 965/1920
+                    start = screenWidth * 0.421f,
+                    top = screenHeight * 0.603f
                 )
-                .width(screenWidth * 0.144f)  // 155/1080
-                .height(screenHeight * 0.075f)  // 145/1920
+                .width(screenWidth * 0.144f)
+                .height(screenHeight * 0.075f)
                 .clickable {
                     loginUser(email, password, context, navController, db, viewModel, onLoginSuccess)
                 }
