@@ -128,15 +128,15 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.386f)
-                .width(screenWidth * 0.657f)
-                .height(screenHeight * 0.08f)
+                .padding(top = screenHeight * 0.336f)
+                .width(screenWidth * 0.80f)
+                .height(screenHeight * 0.80f * 187f / 934f)
         ) {
             // 背景圖片
             Image(
                 painter = painterResource(id = R.drawable.account),
                 contentDescription = null,
-                contentScale = ContentScale.FillBounds,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.matchParentSize()
             )
 
@@ -152,7 +152,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .fillMaxWidth()
-                    .padding(start = 55.dp, end = 20.dp),
+                    .padding(start = 70.dp, end = 20.dp),
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -175,15 +175,15 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.472f)
-                .width(screenWidth * 0.657f)
-                .height(screenHeight * 0.08f)
+                .padding(top = screenHeight * 0.422f)
+                .width(screenWidth * 0.80f)
+                .height(screenHeight * 0.80f * 187f / 934f)
         ) {
             // 背景圖片
             Image(
                 painter = painterResource(id = R.drawable.password),
                 contentDescription = null,
-                contentScale = ContentScale.FillBounds,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.matchParentSize()
             )
 
@@ -200,7 +200,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .fillMaxWidth()
-                    .padding(start = 55.dp, end = 20.dp),
+                    .padding(start = 70.dp, end = 20.dp),
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -227,7 +227,7 @@ fun LoginScreen(
                 .align(Alignment.TopStart)
                 .padding(
                     start = screenWidth * 0.157f,
-                    top = screenHeight * 0.595f
+                    top = screenHeight * 0.600f
                 )
                 .width(screenWidth * 0.217f)
                 .height(screenHeight * 0.065f)
@@ -244,7 +244,7 @@ fun LoginScreen(
                 .align(Alignment.TopStart)
                 .padding(
                     start = screenWidth * 0.421f,
-                    top = screenHeight * 0.603f
+                    top = screenHeight * 0.608f
                 )
                 .width(screenWidth * 0.144f)
                 .height(screenHeight * 0.075f)
