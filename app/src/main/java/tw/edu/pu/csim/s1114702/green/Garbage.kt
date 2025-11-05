@@ -212,7 +212,7 @@ fun GarbageScreen(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("垃圾分類") },
+                title = { Text("一拍即分") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
