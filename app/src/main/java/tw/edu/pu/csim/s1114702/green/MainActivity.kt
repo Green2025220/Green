@@ -478,6 +478,7 @@ fun isValidPassword(password: String): Boolean {
 
 // Email 格式驗證函數
 fun isValidEmail(email: String): Boolean {
+
     // 基本格式檢查
     val emailPattern = "[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
     if (!email.matches(emailPattern.toRegex())) {
