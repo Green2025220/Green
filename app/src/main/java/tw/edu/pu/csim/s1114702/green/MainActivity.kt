@@ -114,6 +114,9 @@ fun LoginScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showPasswordMismatchDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -239,8 +242,8 @@ fun LoginScreen(
 
         Text(
             text = "註冊",
-            fontSize = 14.sp,  // 可以調整文字大小
-            fontWeight = FontWeight.Bold,  // 粗體，讓文字更明顯
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
             color = Color.DarkGray,
             style = LocalTextStyle.current.copy(
                 textDecoration = TextDecoration.Underline
@@ -251,13 +254,149 @@ fun LoginScreen(
                     start = screenWidth * 0.781f,
                     top = screenHeight * 0.540f
                 )
-
                 .clickable {
-                    registerUser(email, password, context, db)
-                }
+                    // 先驗證基本條件
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "請輸入帳號和密碼", Toast.LENGTH_SHORT).show()
+                        return@clickable
+                    }
 
+                    // 驗證密碼長度
+                    if (password.length != 6) {
+                        Toast.makeText(context, "密碼必須是 6 位數", Toast.LENGTH_LONG).show()
+                        return@clickable
+                    }
+
+                    // 驗證密碼格式（只能英數字）
+                    if (!isValidPassword(password)) {
+                        Toast.makeText(context, "密碼只能包含英文字母和數字", Toast.LENGTH_LONG).show()
+                        return@clickable
+                    }
+
+                    // 驗證 email 格式
+                    if (!isValidEmail(email)) {
+                        Toast.makeText(context, "此郵件無效，請重新輸入", Toast.LENGTH_LONG).show()
+                        return@clickable
+                    }
+
+                    // 所有驗證通過，顯示確認密碼對話框
+                    showConfirmDialog = true
+                }
         )
 
+        // 密碼確認對話框
+        if (showConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showConfirmDialog = false
+                    confirmPassword = ""
+                },
+                title = { Text("確認密碼") },
+                text = {
+                    Column {
+                        Text("請再次輸入密碼以確認：")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = confirmPassword,
+                            onValueChange = { confirmPassword = it },
+                            label = { Text("確認密碼") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (confirmPassword == password) {
+                                // 密碼確認正確，執行註冊
+                                registerUser(email, password, context, db)
+                                showConfirmDialog = false
+                                confirmPassword = ""
+                            } else {
+                                // 密碼不一致，顯示錯誤對話框
+                                showConfirmDialog = false
+                                showPasswordMismatchDialog = true
+                            }
+                        }
+                    ) {
+                        Text("確認")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showConfirmDialog = false
+                            confirmPassword = ""
+                        }
+                    ) {
+                        Text("取消")
+                    }
+                }
+            )
+        }
+
+        // 密碼不一致對話框
+        if (showPasswordMismatchDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showPasswordMismatchDialog = false
+                    confirmPassword = ""
+                },
+                title = {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text("密碼不一致")
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "您輸入的密碼與確認密碼不一致\n請選擇下列操作：",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 重新確認按鈕
+                        Button(
+                            onClick = {
+                                showPasswordMismatchDialog = false
+                                confirmPassword = ""
+                                showConfirmDialog = true
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(48.dp)
+                        ) {
+                            Text("重新確認", fontSize = 16.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // 重新註冊按鈕
+                        OutlinedButton(
+                            onClick = {
+                                showPasswordMismatchDialog = false
+                                email = ""
+                                password = ""
+                                confirmPassword = ""
+                                Toast.makeText(context, "已清空，請重新填寫註冊資料", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(48.dp)
+                        ) {
+                            Text("重新註冊", fontSize = 16.sp)
+                        }
+                    }
+                },
+                confirmButton = { },
+                dismissButton = { }
+            )
+        }
 
         // 錯誤訊息
         errorMessage?.let {
@@ -288,7 +427,6 @@ fun loginUser(
         return
     }
 
-
     db.collection("users").document(email).get()
         .addOnSuccessListener { document ->
             if (document.exists()) {
@@ -314,19 +452,12 @@ fun loginUser(
 
 
 fun registerUser(email: String, password: String, context: android.content.Context, db: FirebaseFirestore) {
-    if (email.isBlank() || password.isBlank()) {
-        Toast.makeText(context, "請輸入帳號和密碼", Toast.LENGTH_SHORT).show()
-        return
-    }
-
-
     val hashedPassword = hashPassword(password)
     val user = hashMapOf(
         "email" to email,
         "password" to hashedPassword,
         "score" to 0
     )
-
 
     db.collection("users").document(email).set(user)
         .addOnSuccessListener {
@@ -335,6 +466,33 @@ fun registerUser(email: String, password: String, context: android.content.Conte
         .addOnFailureListener { exception ->
             Toast.makeText(context, "註冊失敗: ${exception.message}", Toast.LENGTH_SHORT).show()
         }
+}
+
+
+// 密碼格式驗證函數（只允許英文字母和數字）
+fun isValidPassword(password: String): Boolean {
+    val passwordPattern = "^[a-zA-Z0-9]+$"
+    return password.matches(passwordPattern.toRegex())
+}
+
+
+// Email 格式驗證函數
+fun isValidEmail(email: String): Boolean {
+    // 基本格式檢查
+    val emailPattern = "[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+    if (!email.matches(emailPattern.toRegex())) {
+        return false
+    }
+
+    // 檢查是否為常見的郵件服務提供商
+    val validDomains = listOf(
+        "gmail.com", "yahoo.com", "yahoo.com.tw", "hotmail.com",
+        "outlook.com", "icloud.com", "live.com", "msn.com",
+        "mail.com", "aol.com", "protonmail.com", "zoho.com"
+    )
+
+    val domain = email.substringAfter("@").lowercase()
+    return validDomains.any { domain == it }
 }
 
 
