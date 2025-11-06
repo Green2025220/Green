@@ -18,7 +18,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
 @Composable
-fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
+fun EverydayScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
     val checklistItems = viewModel.checklistItems
     val checkStates = viewModel.checkStates
     val snackbarHostState = remember { SnackbarHostState() }
@@ -26,7 +26,7 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
     var isCompleted by remember { mutableStateOf(viewModel.hasCompletedToday()) }
 
     LaunchedEffect(Unit) {
-        viewModel.initializeDailyData("user@example.com") {
+        viewModel.initializeDailyData(userEmail) {
             isCompleted = viewModel.hasCompletedToday()
         }
     }
@@ -87,12 +87,12 @@ fun EverydayScreen(navController: NavController, viewModel: ViewModel) {
             Button(
                 onClick = {
                     if (!isCompleted) {
-                        viewModel.calculateDailyScore()
+                        viewModel.calculateDailyScore(userEmail)
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar("今日挑戰已完成，分數已加總！")
                         }
                         isCompleted = true
-                        viewModel.saveDailyChallengeToFirebase("user@example.com")
+                        viewModel.saveDailyChallengeToFirebase(userEmail)
                     } else {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar("今日已完成過挑戰！")

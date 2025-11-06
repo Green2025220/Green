@@ -34,6 +34,7 @@ class ViewModel : ViewModel() {
 
     private var lastCheckedDate: LocalDate = LocalDate.now()
     private var hasAddedScoreToday = false
+    // 改成 List 以支援重複購買（記錄所有購買紀錄）
     var redeemedItems = mutableStateListOf<String>()
 
 
@@ -43,11 +44,6 @@ class ViewModel : ViewModel() {
     // Firebase 資料庫引用
     private val database = FirebaseDatabase.getInstance()
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-
-    init {
-        userId?.let { loadScoreFromFirebase(it) }
-    }
 
 
     fun initializeDailyData(email: String, onComplete: (() -> Unit)? = null) {
@@ -78,7 +74,7 @@ class ViewModel : ViewModel() {
     }
 
 
-    fun calculateDailyScore() {
+    fun calculateDailyScore(email: String) {
         if (hasAddedScoreToday) return
         val completedCount = checkStates.count { it }
         val score = when {
@@ -90,19 +86,27 @@ class ViewModel : ViewModel() {
         totalScore += score
         hasAddedScoreToday = true
         updateTotalScore(totalScore)
+
+        // 立即保存到 Firebase
+        saveDailyChallengeToFirebase(email)
     }
 
 
     fun hasCompletedToday(): Boolean = hasAddedScoreToday
 
 
+    // 修正：允許重複購買
     fun redeemItem(name: String, cost: Int): Boolean {
-        if (redeemedItems.contains(name)) return false
+        // 移除檢查是否已購買的邏輯，允許重複購買
         return if (totalScore >= cost) {
             totalScore -= cost
-            redeemedItems.add(name)
+            redeemedItems.add(name)  // 每次購買都加入列表
+            Log.d("ViewModel", "購買成功: $name, 剩餘分數: $totalScore, 已購買商品數: ${redeemedItems.size}")
             true
-        } else false
+        } else {
+            Log.d("ViewModel", "購買失敗: $name, 分數不足")
+            false
+        }
     }
 
 
@@ -110,12 +114,17 @@ class ViewModel : ViewModel() {
         val db = FirebaseFirestore.getInstance()
         val data = hashMapOf(
             "score" to totalScore,
-            //"checklist" to checkStates.toList(),
-            "redeemedItems" to redeemedItems,
+            "redeemedItems" to redeemedItems.toList(),  // 保存所有購買紀錄
             "itemPositions" to itemPositions.mapValues { mapOf("x" to it.value.x, "y" to it.value.y) }
         )
         db.collection("users").document(email)
-            .update(data)
+            .set(data, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
+                Log.d("ViewModel", "數據保存成功 - 分數: $totalScore")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "數據保存失敗: ${e.message}")
+            }
     }
 
 
@@ -124,7 +133,9 @@ class ViewModel : ViewModel() {
         db.collection("users").document(email).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    totalScore = document.getLong("score")?.toInt() ?: 0
+                    // 使用 _totalScore.value 直接設置，避免觸發 setter
+                    _totalScore.value = document.getLong("score")?.toInt() ?: 0
+
                     val checklist = (document["checklist"] as? List<*>)?.map { it as? Boolean ?: false }
                         ?: List(checklistItems.size) { false }
                     val redeemed = (document["redeemedItems"] as? List<*>)?.mapNotNull { it as? String } ?: listOf()
@@ -139,10 +150,13 @@ class ViewModel : ViewModel() {
 
                     redeemedItems.clear()
                     redeemedItems.addAll(redeemed)
+
+                    Log.d("ViewModel", "載入成功 - 分數: ${_totalScore.value}, 已購買商品數: ${redeemedItems.size}")
                 }
                 onComplete?.invoke()
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "載入失敗: ${e.message}")
                 onComplete?.invoke()
             }
     }
@@ -175,18 +189,6 @@ class ViewModel : ViewModel() {
                 }
         } else {
             Log.e("ViewModel", "User email is null, cannot update score")
-        }
-    }
-
-
-    // 從 Firebase 載入用戶的分數
-    private fun loadScoreFromFirebase(userId: String) {
-        val scoreRef = database.getReference("users/$userId/score")
-        scoreRef.get().addOnSuccessListener { snapshot ->
-            if (snapshot.exists()) {
-                totalScore = snapshot.getValue(Int::class.java) ?: 0
-                Log.d("ViewModel", "Loaded score from Firebase: $totalScore")
-            }
         }
     }
 
@@ -279,4 +281,3 @@ class ViewModel : ViewModel() {
             }
     }
 }
-

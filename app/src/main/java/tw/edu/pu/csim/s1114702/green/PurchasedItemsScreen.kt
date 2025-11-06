@@ -1,6 +1,5 @@
 package tw.edu.pu.csim.s1114702.green
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,25 +18,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
-fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
+fun PurchasedItemsScreen(navController: NavController, viewModel: ViewModel) {
 
     val categories = listOf("物品類", "動物類", "人物類", "植物類")
     var currentCategoryIndex by remember { mutableStateOf(0) }
     val currentCategory = categories[currentCategoryIndex]
-    var showInsufficientScore by remember { mutableStateOf(false) }
-    var showPurchaseSuccess by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
 
-    // 監控購買狀態變化
-    LaunchedEffect(viewModel.redeemedItems.size) {
-        Log.d("StoreScreen", "已購買商品數量: ${viewModel.redeemedItems.size}")
-    }
-
-    val storeItems = listOf(
+    // 所有商品列表（與 StoreScreen 相同）
+    val allStoreItems = listOf(
         StoreItem(R.drawable.s1, "澆水器", 10, R.drawable.watering, "物品類"),
         StoreItem(R.drawable.s4, "柵欄1", 10, R.drawable.fence1, "物品類"),
         StoreItem(R.drawable.s5, "柵欄2", 10, R.drawable.fence2, "物品類"),
@@ -87,13 +77,31 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
         StoreItem(R.drawable.s47, "銀杏樹", 40, R.drawable.tree8, "植物類"),
     )
 
-    val filteredItems = storeItems.filter { it.category == currentCategory }
+    // 建立 Map 來記錄每個商品的購買次數
+    val purchaseCountMap = remember(viewModel.redeemedItems.toList()) {
+        viewModel.redeemedItems.groupingBy { it }.eachCount()
+    }
+
+    // 將購買過的商品與購買次數配對（去重）
+    val purchasedItemsWithCount = remember(purchaseCountMap) {
+        allStoreItems.mapNotNull { item ->
+            val count = purchaseCountMap[item.itemName]
+            if (count != null && count > 0) {
+                PurchasedItemWithCount(item, count)
+            } else {
+                null
+            }
+        }
+    }
+
+    // 依類別篩選
+    val filteredItems = purchasedItemsWithCount.filter { it.item.category == currentCategory }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
         Image(
             painter = painterResource(id = R.drawable.greenbackground),
-            contentDescription = "Store Background",
+            contentDescription = "Background",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -122,23 +130,10 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
                 )
 
                 Text(
-                    text = "商 店",
+                    text = "已購買商品",
                     fontSize = 28.sp,
                     color = Color(0xFF408080),
                     modifier = Modifier.align(Alignment.Center)
-                )
-
-                // Shop 圖片，點擊進入已購買商品頁（注意路由名稱統一使用小寫開頭）
-                Image(
-                    painter = painterResource(id = R.drawable.shop),
-                    contentDescription = "Purchased Items",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .align(Alignment.TopEnd)
-                        .clickable {
-                            Log.d("StoreScreen", "導航到已購買商品頁面")
-                            navController.navigate("purchasedItems")
-                        }
                 )
             }
 
@@ -153,30 +148,30 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 累積分數 + 底色（稍微放大）
+            // 已購買商品標題
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF5CADAD))
-                    .padding(horizontal = 22.dp, vertical = 7.dp),
+                    .background(Color(0xFF46A3FF))
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "目前累積分數：${viewModel.totalScore} 分",
-                    fontSize = 20.sp,
+                    text = "已購買數量：${viewModel.redeemedItems.size} 件",
+                    fontSize = 22.sp,
                     color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(11.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // 類別選單（稍微放大）
+            // 類別選單
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(2.dp, Color.White.copy(alpha = 0.5f))
-                    .padding(vertical = 3.dp)
+                    .padding(vertical = 4.dp)
             ) {
                 val leftArrowColor =
                     if (currentCategoryIndex == 0) Color.LightGray else Color(0xFF408080)
@@ -185,111 +180,60 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
 
                 Text(
                     text = "<",
-                    fontSize = 26.sp,
+                    fontSize = 28.sp,
                     color = leftArrowColor,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .clickable(enabled = currentCategoryIndex > 0) {
-                            currentCategoryIndex--
-                            showInsufficientScore = false
-                            showPurchaseSuccess = false
-                        }
+                        .clickable(enabled = currentCategoryIndex > 0) { currentCategoryIndex-- }
                 )
 
                 Text(
                     text = currentCategory,
-                    fontSize = 24.sp,
+                    fontSize = 26.sp,
                     color = Color(0xFF408080)
                 )
 
                 Text(
                     text = ">",
-                    fontSize = 26.sp,
+                    fontSize = 28.sp,
                     color = rightArrowColor,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .clickable(enabled = currentCategoryIndex < categories.lastIndex) {
-                            currentCategoryIndex++
-                            showInsufficientScore = false
-                            showPurchaseSuccess = false
-                        }
+                        .clickable(enabled = currentCategoryIndex < categories.lastIndex) { currentCategoryIndex++ }
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 顯示物品，允許重複購買
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                contentPadding = PaddingValues(vertical = 8.dp, horizontal = 0.dp)
-            ) {
-                items(filteredItems) { item ->
-                    StoreButton(
-                        storeImageRes = item.storeImageRes,
-                        itemName = item.itemName,
-                        score = item.score,
-                        onClick = {
-                            Log.d("StoreScreen", "嘗試購買: ${item.itemName}, 需要分數: ${item.score}, 當前分數: ${viewModel.totalScore}")
-
-                            if (viewModel.totalScore < item.score) {
-                                showInsufficientScore = true
-                                showPurchaseSuccess = false
-                                Log.d("StoreScreen", "分數不足")
-
-                                // 1秒後自動隱藏分數不足訊息
-                                coroutineScope.launch {
-                                    delay(1000)
-                                    showInsufficientScore = false
-                                }
-                            } else {
-                                val success = viewModel.redeemItem(item.itemName, item.score)
-                                if (success) {
-                                    viewModel.saveDailyChallengeToFirebase(userEmail)
-                                    showInsufficientScore = false
-                                    showPurchaseSuccess = true
-                                    Log.d("StoreScreen", "購買成功，當前已購買: ${viewModel.redeemedItems.toList()}")
-
-                                    // 1秒後隱藏成功訊息
-                                    coroutineScope.launch {
-                                        delay(1000)
-                                        showPurchaseSuccess = false
-                                    }
-                                } else {
-                                    Log.d("StoreScreen", "購買失敗")
-                                }
-                            }
-                        }
+            // 顯示已購買商品
+            if (filteredItems.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "此類別尚無已購買商品",
+                        fontSize = 20.sp,
+                        color = Color(0xFF408080)
                     )
                 }
-            }
-
-            // 訊息提示區域
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                when {
-                    showInsufficientScore -> {
-                        Text(
-                            text = "分數不足，無法購買！",
-                            fontSize = 20.sp,
-                            color = Color(0xFFFF6B6B),
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                        )
-                    }
-                    showPurchaseSuccess -> {
-                        Text(
-                            text = "購買成功！",
-                            fontSize = 20.sp,
-                            color = Color(0xFF2E7D32)
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(bottom = 30.dp)
+                ) {
+                    items(filteredItems) { itemWithCount ->
+                        PurchasedItemDisplay(
+                            storeImageRes = itemWithCount.item.storeImageRes,
+                            itemName = itemWithCount.item.itemName,
+                            count = itemWithCount.count
                         )
                     }
                 }
@@ -298,26 +242,22 @@ fun StoreScreen(navController: NavController, viewModel: ViewModel, userEmail: S
     }
 }
 
-data class StoreItem(
-    val storeImageRes: Int,
-    val itemName: String,
-    val score: Int,
-    val forestImageRes: Int,
-    val category: String
+// 輔助資料類別：商品 + 購買次數
+data class PurchasedItemWithCount(
+    val item: StoreItem,
+    val count: Int
 )
 
 @Composable
-fun StoreButton(
+fun PurchasedItemDisplay(
     storeImageRes: Int,
     itemName: String,
-    score: Int,
-    onClick: () -> Unit
+    count: Int
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { onClick() }
             .background(Color.Transparent),
         contentAlignment = Alignment.Center
     ) {
@@ -328,5 +268,21 @@ fun StoreButton(
             contentScale = ContentScale.Fit
         )
 
+        // 如果購買次數 > 1，顯示數量角標
+        if (count > 1) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .background(Color(0xFF408080))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "x$count",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
+        }
     }
 }

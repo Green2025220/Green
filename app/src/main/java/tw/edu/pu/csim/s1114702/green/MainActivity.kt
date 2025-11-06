@@ -1,6 +1,5 @@
 package tw.edu.pu.csim.s1114702.green
 
-
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -8,15 +7,20 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,26 +30,14 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 import java.security.MessageDigest
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.ui.text.style.TextDecoration
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-        // Firebase 初始化
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
         }
-
 
         setContent {
             GreenTheme {
@@ -55,13 +47,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val viewModel: ViewModel = viewModel()
     var userEmail by remember { mutableStateOf("") }
-
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
@@ -70,33 +60,9 @@ fun AppNavigation() {
             }
         }
         composable("scone") { SconeScreen(navController) }
-        composable("calculator") { CalculatorScreen(navController) }
-        composable("car") { CarScreen(navController) }
-        composable("motor") { MotorScreen(navController) }
-        composable("bus") { BusScreen(navController) }
-        composable("game") { GameScreen(navController) }
-        composable("myforest") { MyforestScreen(navController, viewModel, userEmail) }
-        composable("everyday") { EverydayScreen(navController, viewModel) }
-        composable("store") { StoreScreen(navController, viewModel, userEmail) }
-        composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
-        composable("turn") {
-            TurnScreen(
-                navController = navController,
-                viewModel = viewModel,
-                userEmail = userEmail
-            )
-        }
-        composable("Garbagegame") {
-            GarbageGameScreen(
-                navController = navController,
-                viewModel = viewModel,
-                userEmail = userEmail
-            )
-        }
-        composable("garbage") { GarbageScreen(navController) }
+        // ...其他畫面
     }
 }
-
 
 @Composable
 fun LoginScreen(
@@ -117,10 +83,8 @@ fun LoginScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showPasswordMismatchDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 背景圖片
         Image(
             painter = backgroundImage,
             contentDescription = null,
@@ -128,7 +92,7 @@ fun LoginScreen(
             modifier = Modifier.matchParentSize()
         )
 
-        // 帳號輸入框（使用自訂圖片背景）
+        // Email 輸入框
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -136,7 +100,6 @@ fun LoginScreen(
                 .width(screenWidth * 0.80f)
                 .height(screenHeight * 0.80f * 187f / 934f)
         ) {
-            // 背景圖片
             Image(
                 painter = painterResource(id = R.drawable.account),
                 contentDescription = null,
@@ -144,7 +107,6 @@ fun LoginScreen(
                 modifier = Modifier.matchParentSize()
             )
 
-            // 文字輸入
             BasicTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -175,7 +137,7 @@ fun LoginScreen(
             )
         }
 
-        // 密碼輸入框（使用自訂圖片背景）
+        // Password 輸入框
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -183,7 +145,6 @@ fun LoginScreen(
                 .width(screenWidth * 0.80f)
                 .height(screenHeight * 0.80f * 187f / 934f)
         ) {
-            // 背景圖片
             Image(
                 painter = painterResource(id = R.drawable.password),
                 contentDescription = null,
@@ -191,7 +152,6 @@ fun LoginScreen(
                 modifier = Modifier.matchParentSize()
             )
 
-            // 密碼輸入（使用 PasswordVisualTransformation）
             BasicTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -223,7 +183,7 @@ fun LoginScreen(
             )
         }
 
-        // 登入按鈕（樹形圖案）
+        // 登入按鈕
         Image(
             painter = painterResource(id = R.drawable.login),
             contentDescription = "登入",
@@ -240,6 +200,7 @@ fun LoginScreen(
                 }
         )
 
+        // 註冊文字
         Text(
             text = "註冊",
             fontSize = 14.sp,
@@ -255,36 +216,31 @@ fun LoginScreen(
                     top = screenHeight * 0.540f
                 )
                 .clickable {
-                    // 先驗證基本條件
                     if (email.isBlank() || password.isBlank()) {
                         Toast.makeText(context, "請輸入帳號和密碼", Toast.LENGTH_SHORT).show()
                         return@clickable
                     }
 
-                    // 驗證密碼長度
                     if (password.length != 6) {
                         Toast.makeText(context, "密碼必須是 6 位數", Toast.LENGTH_LONG).show()
                         return@clickable
                     }
 
-                    // 驗證密碼格式（只能英數字）
                     if (!isValidPassword(password)) {
                         Toast.makeText(context, "密碼只能包含英文字母和數字", Toast.LENGTH_LONG).show()
                         return@clickable
                     }
 
-                    // 驗證 email 格式
                     if (!isValidEmail(email)) {
                         Toast.makeText(context, "此郵件無效，請重新輸入", Toast.LENGTH_LONG).show()
                         return@clickable
                     }
 
-                    // 所有驗證通過，顯示確認密碼對話框
                     showConfirmDialog = true
                 }
         )
 
-        // 密碼確認對話框
+        // 確認密碼對話框
         if (showConfirmDialog) {
             AlertDialog(
                 onDismissRequest = {
@@ -310,12 +266,10 @@ fun LoginScreen(
                     TextButton(
                         onClick = {
                             if (confirmPassword == password) {
-                                // 密碼確認正確，執行註冊
                                 registerUser(email, password, context, db)
                                 showConfirmDialog = false
                                 confirmPassword = ""
                             } else {
-                                // 密碼不一致，顯示錯誤對話框
                                 showConfirmDialog = false
                                 showPasswordMismatchDialog = true
                             }
@@ -344,23 +298,12 @@ fun LoginScreen(
                     showPasswordMismatchDialog = false
                     confirmPassword = ""
                 },
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("密碼不一致")
-                    }
-                },
+                title = { Text("密碼不一致") },
                 text = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "您輸入的密碼與確認密碼不一致\n請選擇下列操作：",
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("您輸入的密碼與確認密碼不一致\n請選擇下列操作：")
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 重新確認按鈕
                         Button(
                             onClick = {
                                 showPasswordMismatchDialog = false
@@ -370,13 +313,10 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                                 .height(48.dp)
-                        ) {
-                            Text("重新確認", fontSize = 16.sp)
-                        }
+                        ) { Text("重新確認", fontSize = 16.sp) }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // 重新註冊按鈕
                         OutlinedButton(
                             onClick = {
                                 showPasswordMismatchDialog = false
@@ -388,31 +328,17 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                                 .height(48.dp)
-                        ) {
-                            Text("重新註冊", fontSize = 16.sp)
-                        }
+                        ) { Text("重新註冊", fontSize = 16.sp) }
                     }
                 },
-                confirmButton = { },
-                dismissButton = { }
-            )
-        }
-
-        // 錯誤訊息
-        errorMessage?.let {
-            Text(
-                text = it,
-                color = Color.Red,
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 100.dp)
+                confirmButton = {},
+                dismissButton = {}
             )
         }
     }
 }
 
-
+// 登入
 fun loginUser(
     email: String,
     password: String,
@@ -450,42 +376,51 @@ fun loginUser(
         }
 }
 
+// 註冊（檢查重複帳號）
+fun registerUser(
+    email: String,
+    password: String,
+    context: android.content.Context,
+    db: FirebaseFirestore
+) {
+    val userRef = db.collection("users").document(email)
 
-fun registerUser(email: String, password: String, context: android.content.Context, db: FirebaseFirestore) {
-    val hashedPassword = hashPassword(password)
-    val user = hashMapOf(
-        "email" to email,
-        "password" to hashedPassword,
-        "score" to 0
-    )
-
-    db.collection("users").document(email).set(user)
-        .addOnSuccessListener {
-            Toast.makeText(context, "註冊成功，請登入！", Toast.LENGTH_SHORT).show()
+    userRef.get()
+        .addOnSuccessListener { document ->
+            if (document.exists()) {
+                Toast.makeText(context, "此帳號已註冊，請直接登入", Toast.LENGTH_SHORT).show()
+            } else {
+                val hashedPassword = hashPassword(password)
+                val user = hashMapOf(
+                    "email" to email,
+                    "password" to hashedPassword,
+                    "score" to 0
+                )
+                userRef.set(user)
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "註冊成功，請登入！", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { exception ->
+                        Toast.makeText(context, "註冊失敗: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
         .addOnFailureListener { exception ->
-            Toast.makeText(context, "註冊失敗: ${exception.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "檢查帳號失敗: ${exception.message}", Toast.LENGTH_SHORT).show()
         }
 }
 
-
-// 密碼格式驗證函數（只允許英文字母和數字）
+// 密碼格式驗證
 fun isValidPassword(password: String): Boolean {
     val passwordPattern = "^[a-zA-Z0-9]+$"
     return password.matches(passwordPattern.toRegex())
 }
 
-
-// Email 格式驗證函數
+// Email 格式驗證
 fun isValidEmail(email: String): Boolean {
-
-    // 基本格式檢查
     val emailPattern = "[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
-    if (!email.matches(emailPattern.toRegex())) {
-        return false
-    }
+    if (!email.matches(emailPattern.toRegex())) return false
 
-    // 檢查是否為常見的郵件服務提供商
     val validDomains = listOf(
         "gmail.com", "yahoo.com", "yahoo.com.tw", "hotmail.com",
         "outlook.com", "icloud.com", "live.com", "msn.com",
@@ -496,7 +431,7 @@ fun isValidEmail(email: String): Boolean {
     return validDomains.any { domain == it }
 }
 
-
+// SHA-256 密碼加密
 fun hashPassword(password: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
     return bytes.joinToString("") { "%02x".format(it) }
