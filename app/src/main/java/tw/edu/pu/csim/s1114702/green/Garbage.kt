@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,6 +31,7 @@ import org.tensorflow.lite.task.vision.detector.ObjectDetector
 import org.tensorflow.lite.task.vision.detector.Detection
 import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
@@ -166,7 +168,10 @@ fun ImageProxy.toBitmap(context: Context): Bitmap {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GarbageScreen(navController: NavController) {
+fun GarbageScreen(navController: NavController,
+                  viewModel: ViewModel,
+                  userEmail: String
+                  ) {
     val localContext = LocalContext.current
 
     var detectedItem by remember { mutableStateOf("尚未偵測") }
@@ -175,6 +180,41 @@ fun GarbageScreen(navController: NavController) {
 
     var lastDetectedLabel by remember { mutableStateOf("") }
     var consecutiveCount by remember { mutableStateOf(0) }
+
+    //新增：獎勵相關狀態
+    var showRewardDialog by remember { mutableStateOf(false) }
+    var remainingRewards by remember { mutableStateOf(3) }
+    var lastRewardedCategory by remember { mutableStateOf("") }
+
+    var lastRewardTime by remember { mutableStateOf(0L) }  // 上次獲得獎勵的時間戳
+    val cooldownDuration = 5000L  // 冷卻時間 5 秒
+
+    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(lastRewardTime) {
+        if (lastRewardTime > 0) {
+            while (true) {
+                currentTime = System.currentTimeMillis()
+                val timeSinceLastReward = currentTime - lastRewardTime
+
+                if (timeSinceLastReward >= cooldownDuration) {
+                    // 冷卻結束
+                    break
+                }
+
+                // 每 100 毫秒更新一次（比較平衡性能和流暢度）
+                kotlinx.coroutines.delay(100)
+            }
+        }
+    }
+
+    //載入一拍即分數據
+    LaunchedEffect(Unit) {
+        if (userEmail.isNotEmpty()) {
+            viewModel.loadGarbageDataFromFirebase(userEmail)
+            remainingRewards = viewModel.getRemainingGarbageRewards()
+        }
+    }
 
     // ===== 動態請求相機權限 =====
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -205,6 +245,36 @@ fun GarbageScreen(navController: NavController) {
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
+            }
+        )
+    }
+
+    //獎勵對話框
+    if (showRewardDialog) {
+        AlertDialog(
+            onDismissRequest = { showRewardDialog = false },
+            title = { Text("🎉 獲得獎勵") },
+            text = {
+                Column {
+                    Text("成功辨識垃圾分類！")
+                    Text("獲得 1 點環保分數")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "辨識結果: $lastRewardedCategory",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "今日剩餘次數: ${remainingRewards}/3",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showRewardDialog = false }) {
+                    Text("太好了！")
+                }
             }
         )
     }
@@ -283,9 +353,48 @@ fun GarbageScreen(navController: NavController) {
                                                                         consecutiveCount++
                                                                         if (consecutiveCount >= 5) {
                                                                             val chineseLabel = translateToChineseItem(label)
+                                                                            val categoryResult = classifyItem(label)
                                                                             detectedItem = chineseLabel
                                                                             category = classifyItem(label)
                                                                             confidence = score
+
+                                                                            // 檢查是否可以獲得獎勵
+                                                                            if (score >= 0.5f &&
+                                                                                categoryResult != "其他" &&
+                                                                                userEmail.isNotEmpty()) {
+                                                                                val currentTime = System.currentTimeMillis()
+                                                                                val timeSinceLastReward = currentTime - lastRewardTime
+
+                                                                                if (timeSinceLastReward >= cooldownDuration) {
+                                                                                    val rewarded = viewModel.rewardGarbageClassification(userEmail)
+
+                                                                                    if (rewarded) {
+                                                                                        lastRewardedCategory = categoryResult
+                                                                                        remainingRewards = viewModel.getRemainingGarbageRewards()
+                                                                                        showRewardDialog = true
+                                                                                        lastRewardTime = currentTime
+
+                                                                                        Log.d("GarbageScreen", "獲得獎勵！分類: $categoryResult, 信心度: ${score * 100}%")
+                                                                                    } else {
+                                                                                        // 已達上限,不顯示對話框
+                                                                                        Log.d("GarbageScreen", "今日已達上限")
+                                                                                    }
+
+                                                                                    // 重置連續計數，避免重複獎勵
+                                                                                    consecutiveCount = 0
+                                                                                    lastDetectedLabel = ""
+                                                                                }else {
+                                                                                    // 在冷卻期間
+                                                                                    val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
+                                                                                    Log.d("GarbageScreen", "冷卻中，剩餘 $remainingCooldown 秒")
+
+                                                                                    // 重置連續計數，避免繼續累積
+                                                                                    consecutiveCount = 0
+                                                                                    lastDetectedLabel = ""
+                                                                                }
+
+                                                                            }
+
                                                                         } else {
                                                                             detectedItem = "辨識中... ($consecutiveCount/5)"
                                                                             category = "請保持穩定"
@@ -348,6 +457,44 @@ fun GarbageScreen(navController: NavController) {
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+                    // 今日獎勵狀態
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+
+                        val timeSinceLastReward = currentTime - lastRewardTime
+                        val isInCooldown = timeSinceLastReward < cooldownDuration && lastRewardTime > 0
+
+                        when {
+                            isInCooldown -> {
+                                val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
+                                Text(
+                                    "⏱️ 冷卻中... (${remainingCooldown}秒)",
+                                    color = Color(0xFFFF9800),
+                                    fontSize = 14.sp
+                                )
+                            }
+                            remainingRewards > 0 -> {
+                                Text(
+                                    "💚 今日剩餘獎勵次數: $remainingRewards/3",
+                                    color = Color(0xFF2CA673),
+                                    fontSize = 14.sp
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    "✓ 今日已達上限 (3/3)",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+
                     Text(
                         text = if (objectDetector != null) "模型已載入" else "模型載入失敗",
                         style = MaterialTheme.typography.bodySmall,

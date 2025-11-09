@@ -144,6 +144,16 @@ class ViewModel : ViewModel() {
                     // 載入碳排放計算器日期
                     lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
 
+                    //新增：載入一拍即分數據
+                    lastGarbageDate = document.getString("lastGarbageDate") ?: ""
+                    garbageRewardCount = (document.getLong("garbageRewardCount")?.toInt()) ?: 0
+
+                    // 檢查是否為新的一天
+                    val today = LocalDate.now().toString()
+                    if (lastGarbageDate != today) {
+                        garbageRewardCount = 0
+                    }
+
                     itemPositions.clear()
                     positions.forEach { (name, pos) ->
                         itemPositions[name] = ItemPosition(pos["x"] ?: 0f, pos["y"] ?: 0f)
@@ -351,4 +361,121 @@ class ViewModel : ViewModel() {
                 Log.e("ViewModel", "載入碳排放計算器日期失敗: ${e.message}")
             }
     }
+
+    // 一拍即分相關狀態
+    private val _lastGarbageDate = mutableStateOf("")
+    var lastGarbageDate: String
+        get() = _lastGarbageDate.value
+        set(value) { _lastGarbageDate.value = value }
+
+    private val _garbageRewardCount = mutableStateOf(0)
+    var garbageRewardCount: Int
+        get() = _garbageRewardCount.value
+        set(value) { _garbageRewardCount.value = value }
+
+    /**
+     * 檢查今天是否可以從一拍即分獲得分數
+     * @return true 表示今天還有獲得分數的機會（未達3次）
+     */
+    fun canGetGarbageReward(): Boolean {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天,重置計數
+        if (lastGarbageDate != today) {
+            garbageRewardCount = 0
+            lastGarbageDate = today
+        }
+
+        return garbageRewardCount < 3
+    }
+
+    /**
+     * 一拍即分獎勵 - 每天前3次可獲得 1 分
+     * @param email 使用者 email
+     * @return true 表示成功獲得分數，false 表示今天已達上限
+     */
+    fun rewardGarbageClassification(email: String): Boolean {
+        if (canGetGarbageReward()) {
+            val today = LocalDate.now().toString()
+
+            // 如果是新的一天,重置計數
+            if (lastGarbageDate != today) {
+                garbageRewardCount = 0
+                lastGarbageDate = today
+            }
+
+            garbageRewardCount += 1
+            totalScore += 1
+
+            // 儲存到 Firebase
+            saveGarbageDataToFirebase(email, today, garbageRewardCount)
+
+            Log.d("ViewModel", "一拍即分獎勵：獲得 1 分 (今日第 $garbageRewardCount 次)，當前總分: $totalScore")
+            return true
+        }
+
+        Log.d("ViewModel", "一拍即分獎勵：今天已達上限 (3次)")
+        return false
+    }
+
+    /**
+     * 獲取今日剩餘獎勵次數
+     */
+    fun getRemainingGarbageRewards(): Int {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天,重置計數
+        if (lastGarbageDate != today) {
+            return 3
+        }
+
+        return 3 - garbageRewardCount
+    }
+
+    /**
+     * 儲存一拍即分數據到 Firebase
+     */
+    private fun saveGarbageDataToFirebase(email: String, date: String, count: Int) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastGarbageDate" to date,
+                    "garbageRewardCount" to count,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "一拍即分數據儲存成功: 日期=$date, 次數=$count")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "一拍即分數據儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 從 Firebase 載入一拍即分數據
+     */
+    fun loadGarbageDataFromFirebase(email: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    lastGarbageDate = document.getString("lastGarbageDate") ?: ""
+                    garbageRewardCount = (document.getLong("garbageRewardCount")?.toInt()) ?: 0
+
+                    // 檢查是否為新的一天
+                    val today = LocalDate.now().toString()
+                    if (lastGarbageDate != today) {
+                        garbageRewardCount = 0
+                    }
+
+                    Log.d("ViewModel", "載入一拍即分數據: 日期=$lastGarbageDate, 次數=$garbageRewardCount")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "載入一拍即分數據失敗: ${e.message}")
+            }
+    }
+
 }

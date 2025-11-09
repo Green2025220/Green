@@ -109,7 +109,7 @@ fun SconeScreen(navController: NavController) {
 
                 ImageButton(
                     resId = R.drawable.garbagebtn,
-                    contentDescription = "垃圾分類",
+                    contentDescription = "一拍即分",
                     modifier = Modifier
                         .align(Alignment.Center)
                         .offset(x = 100.dp, y = 80.dp)

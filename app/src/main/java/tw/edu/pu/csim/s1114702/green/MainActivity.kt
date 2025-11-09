@@ -82,7 +82,11 @@ fun AppNavigation() {
                 userEmail = userEmail
             )
         }
-        composable("garbage") { GarbageScreen(navController) }
+        composable("garbage") { GarbageScreen(
+            navController = navController,
+            viewModel = viewModel,
+            userEmail = userEmail
+        ) }
     }
 }
 
