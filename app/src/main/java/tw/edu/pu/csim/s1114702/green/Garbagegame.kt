@@ -1,6 +1,7 @@
 package tw.edu.pu.csim.s1114702.green
 
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +46,57 @@ fun GarbageGameScreen(
     viewModel: ViewModel,
     userEmail: String
 ) {
+
+    // 檢查是否還能遊玩
+    val canPlay = viewModel.canPlayGarbageGame()
+    val remainingPlays = viewModel.getRemainingGarbageGamePlays()
+
+    // 如果今天次數已用完，顯示提示畫面
+    if (!canPlay) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFEAF7E1))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "今日遊玩次數已用完",
+                    fontSize = 28.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "每天最多可遊玩 3 次",
+                    fontSize = 20.sp,
+                    color = Color.DarkGray
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "明天再來挑戰吧！",
+                    fontSize = 20.sp,
+                    color = Color.DarkGray
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD2E9FF),
+                        contentColor = Color(0xFF336666)
+                    )
+                ) {
+                    Text("返回", fontSize = 20.sp)
+                }
+            }
+        }
+        return  // 提前結束，不顯示遊戲內容
+    }
+
     var score by remember { mutableIntStateOf(0) }
     var timeLeft by remember { mutableIntStateOf(30) }
     var currentTrash by remember { mutableStateOf<Pair<Int, Boolean>?>(null) }
@@ -274,12 +327,18 @@ fun GarbageGameScreen(
         }
     }
 
-    // 在遊戲結束時，將分數加入 ViewModel 的總分
+    // 在遊戲結束時，將分數加入 ViewModel 的總分並記錄遊玩次數
     LaunchedEffect(isGameOver) {
-        if (isGameOver && !hasAddedScore && score > 0) {
-            viewModel.updateTotalScore(score)
-            viewModel.saveDailyChallengeToFirebase(userEmail)
-            hasAddedScore = true
+        if (isGameOver && !hasAddedScore) {
+            // 使用 recordGarbageGamePlay 來記錄遊玩次數和加分
+            val success = viewModel.recordGarbageGamePlay(userEmail, score)
+            if (success) {
+                viewModel.saveDailyChallengeToFirebase(userEmail)
+                hasAddedScore = true
+                Log.d("GarbageGame", "遊戲結束，分數已加入總分：$score")
+            } else {
+                Log.d("GarbageGame", "遊戲結束，但今日遊玩次數已達上限")
+            }
         }
     }
 
@@ -296,6 +355,28 @@ fun GarbageGameScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (!isGameOver) {
+
+                // 遊戲標題和剩餘次數
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "垃圾分類遊戲",
+                        fontSize = 24.sp,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "今日剩餘次數: $remainingPlays / 3",
+                        fontSize = 14.sp,
+                        color = Color(0xFF336666),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // 分數和時間顯示
                 Row(
                     modifier = Modifier.fillMaxWidth(),

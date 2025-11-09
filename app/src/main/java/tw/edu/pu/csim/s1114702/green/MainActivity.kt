@@ -67,7 +67,7 @@ fun AppNavigation() {
         composable("game") { GameScreen(navController) }
         composable("myforest") { MyforestScreen(navController, viewModel, userEmail) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
-        composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
+        composable("Game1") { QuizGameScreen(navController, viewModel = viewModel, userEmail = userEmail) }
         composable("turn") {
             TurnScreen(
                 navController = navController,
@@ -387,6 +387,8 @@ fun loginUser(
                 if (storedPasswordHash == inputPasswordHash) {
                     Toast.makeText(context, "登入成功！", Toast.LENGTH_SHORT).show()
                     viewModel.loadDailyChallengeFromFirebase(email) {
+                        viewModel.loadTurnGameDataFromFirebase(email)
+                        viewModel.loadGarbageGameDataFromFirebase(email)
                         onLoginSuccess(email)
                         navController.navigate("scone")
                     }

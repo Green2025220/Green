@@ -37,6 +37,67 @@ fun TurnScreen(
     userEmail: String,
     turnViewModel: TurnViewModel = viewModel()
 ) {
+    // 檢查是否還能遊玩
+    val canPlay = viewModel.canPlayTurnGame()
+    val remainingPlays = viewModel.getRemainingTurnGamePlays()
+
+    // 如果今天次數已用完，顯示提示畫面
+    if (!canPlay) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF81C0C0))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "今日遊玩次數已用完",
+                    fontSize = 28.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "每天最多可遊玩 3 次",
+                    fontSize = 20.sp,
+                    color = Color.DarkGray
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "明天再來挑戰吧！",
+                    fontSize = 20.sp,
+                    color = Color.DarkGray
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003060))
+                ) {
+                    Text("返回", fontSize = 20.sp)
+                }
+            }
+
+            // 返回按鈕
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .clickable { navController.popBackStack() }
+                    .align(Alignment.TopStart)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.backarrow),
+                    contentDescription = "Back"
+                )
+            }
+        }
+        return  // 提前結束，不顯示遊戲內容
+    }
+
     val cards = turnViewModel.cards
     val lockBoard by turnViewModel.lockBoard
     val pairsFound by turnViewModel.pairsFound
@@ -44,6 +105,7 @@ fun TurnScreen(
     val showMatchedCard by turnViewModel.showMatchedCard
     val matchedCardImageRes by turnViewModel.matchedCardImageRes
     val score by turnViewModel.score
+
 
 
     LaunchedEffect(Unit) {
@@ -229,6 +291,12 @@ fun TurnScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Turn 翻牌遊戲", fontSize = 32.sp, color = Color.Black)
+                Text(
+                    "今日剩餘次數: $remainingPlays / 3",
+                    fontSize = 16.sp,
+                    color = Color(0xFF003060),
+                    fontWeight = FontWeight.Medium
+                )
                 Spacer(modifier = Modifier.height(24.dp))
 
 
@@ -513,7 +581,7 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
 
     fun addScoreToViewModel(sharedViewModel: ViewModel, userEmail: String) {
         if (!scoreAdded && score.value > 0) {
-            sharedViewModel.updateTotalScore(score.value)
+            sharedViewModel.recordTurnGamePlay(userEmail, score.value)
             sharedViewModel.saveDailyChallengeToFirebase(userEmail)
             scoreAdded = true
             println("Turn 遊戲分數已加到總分：+${score.value}")

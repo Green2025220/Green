@@ -144,15 +144,37 @@ class ViewModel : ViewModel() {
                     // 載入碳排放計算器日期
                     lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
 
-                    //新增：載入一拍即分數據
+                    //載入一拍即分數據
                     lastGarbageDate = document.getString("lastGarbageDate") ?: ""
                     garbageRewardCount = (document.getLong("garbageRewardCount")?.toInt()) ?: 0
+
+                    //載入永續挑戰遊戲數據
+                    lastQuizGameDate = document.getString("lastQuizGameDate") ?: ""
+                    quizGamePlayCount = (document.getLong("quizGamePlayCount")?.toInt()) ?: 0
+
+                    //載入 Turn 遊戲數據
+                    lastTurnGameDate = document.getString("lastTurnGameDate") ?: ""
+                    turnGamePlayCount = (document.getLong("turnGamePlayCount")?.toInt()) ?: 0
+
+                    //載入 GarbageGame 數據
+                    lastGarbageGameDate = document.getString("lastGarbageGameDate") ?: ""
+                    garbageGamePlayCount = (document.getLong("garbageGamePlayCount")?.toInt()) ?: 0
 
                     // 檢查是否為新的一天
                     val today = LocalDate.now().toString()
                     if (lastGarbageDate != today) {
                         garbageRewardCount = 0
                     }
+                    if (lastQuizGameDate != today) {
+                        quizGamePlayCount = 0
+                    }
+                    if (lastTurnGameDate != today) {
+                        turnGamePlayCount = 0
+                    }
+                    if (lastGarbageGameDate != today) {
+                        garbageGamePlayCount = 0
+                    }
+
 
                     itemPositions.clear()
                     positions.forEach { (name, pos) ->
@@ -475,6 +497,361 @@ class ViewModel : ViewModel() {
             }
             .addOnFailureListener { e ->
                 Log.e("ViewModel", "載入一拍即分數據失敗: ${e.message}")
+            }
+    }
+    // 永續挑戰遊戲相關狀態
+    private val _lastQuizGameDate = mutableStateOf("")
+    var lastQuizGameDate: String
+        get() = _lastQuizGameDate.value
+        set(value) { _lastQuizGameDate.value = value }
+
+    private val _quizGamePlayCount = mutableStateOf(0)
+    var quizGamePlayCount: Int
+        get() = _quizGamePlayCount.value
+        set(value) { _quizGamePlayCount.value = value }
+
+    /**
+     * 檢查今天是否可以玩永續挑戰遊戲
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     * @return true 表示今天還有遊玩機會
+     */
+    fun canPlayQuizGame(maxPlays: Int = 3): Boolean {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，重置計數
+        if (lastQuizGameDate != today) {
+            quizGamePlayCount = 0
+            lastQuizGameDate = today
+        }
+
+        return quizGamePlayCount < maxPlays
+    }
+
+    /**
+     * 獲取今日剩餘遊玩次數
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     */
+    fun getRemainingQuizGamePlays(maxPlays: Int = 3): Int {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，返回最大次数
+        if (lastQuizGameDate != today) {
+            return maxPlays
+        }
+
+        return maxPlays - quizGamePlayCount
+    }
+
+    /**
+     * 紀錄一次遊戲遊玩（遊戲結束時適用）
+     * @param email 使用者 email
+     * @param score 本次遊戲得分
+     * @return true 表示成功紀錄，false 表示今天已達上限
+     */
+    fun recordQuizGamePlay(email: String, score: Int): Boolean {
+        if (canPlayQuizGame()) {
+            val today = LocalDate.now().toString()
+
+            // 如果是新的一天，重置計數
+            if (lastQuizGameDate != today) {
+                quizGamePlayCount = 0
+                lastQuizGameDate = today
+            }
+
+            quizGamePlayCount += 1
+            totalScore += score  // 添加分數
+
+            // 儲存到 Firebase
+            saveQuizGameDataToFirebase(email, today, quizGamePlayCount)
+
+            Log.d("ViewModel", "永續挑戰遊戲紀錄：本次得分 $score，今日第 $quizGamePlayCount 次，當前總分: $totalScore")
+            return true
+        }
+
+        Log.d("ViewModel", "永續挑戰遊戲：今天已達上限")
+        return false
+    }
+
+    /**
+     * 儲存永續挑戰遊戲數據到 Firebase
+     */
+    private fun saveQuizGameDataToFirebase(email: String, date: String, count: Int) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastQuizGameDate" to date,
+                    "quizGamePlayCount" to count,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "永續挑戰遊戲數據儲存成功: 日期=$date, 次數=$count")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "永續挑戰遊戲數據儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 從 Firebase 載入永續挑戰遊戲數據
+     */
+    fun loadQuizGameDataFromFirebase(email: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    lastQuizGameDate = document.getString("lastQuizGameDate") ?: ""
+                    quizGamePlayCount = (document.getLong("quizGamePlayCount")?.toInt()) ?: 0
+
+                    // 檢查是否為新的一天
+                    val today = LocalDate.now().toString()
+                    if (lastQuizGameDate != today) {
+                        quizGamePlayCount = 0
+                    }
+
+                    Log.d("ViewModel", "載入永續挑戰遊戲數據: 日期=$lastQuizGameDate, 次數=$quizGamePlayCount")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "永續挑戰遊戲數據儲存失敗: ${e.message}")
+            }
+    }
+    // Turn 翻牌遊戲相關狀態
+    private val _lastTurnGameDate = mutableStateOf("")
+    var lastTurnGameDate: String
+        get() = _lastTurnGameDate.value
+        set(value) { _lastTurnGameDate.value = value }
+
+    private val _turnGamePlayCount = mutableStateOf(0)
+    var turnGamePlayCount: Int
+        get() = _turnGamePlayCount.value
+        set(value) { _turnGamePlayCount.value = value }
+
+    /**
+     * 檢查今天是否可以玩 Turn 翻牌遊戲
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     * @return true 表示今天還有遊玩機會
+     */
+    fun canPlayTurnGame(maxPlays: Int = 3): Boolean {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，重置計數
+        if (lastTurnGameDate != today) {
+            turnGamePlayCount = 0
+            lastTurnGameDate = today
+        }
+
+        return turnGamePlayCount < maxPlays
+    }
+
+    /**
+     * 獲取今日剩餘 Turn 遊玩次數
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     */
+    fun getRemainingTurnGamePlays(maxPlays: Int = 3): Int {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，返回最大次數
+        if (lastTurnGameDate != today) {
+            return maxPlays
+        }
+
+        return maxPlays - turnGamePlayCount
+    }
+
+    /**
+     * 紀錄一次 Turn 遊戲遊玩（遊戲結束時調用）
+     * @param email 使用者 email
+     * @param score 本次遊戲得分
+     * @return true 表示成功紀錄，false 表示今天已達上限
+     */
+    fun recordTurnGamePlay(email: String, score: Int): Boolean {
+        if (canPlayTurnGame()) {
+            val today = LocalDate.now().toString()
+
+            // 如果是新的一天，重置計數
+            if (lastTurnGameDate != today) {
+                turnGamePlayCount = 0
+                lastTurnGameDate = today
+            }
+
+            turnGamePlayCount += 1
+            totalScore += score  // 添加分數
+
+            // 儲存到 Firebase
+            saveTurnGameDataToFirebase(email, today, turnGamePlayCount)
+
+            Log.d("ViewModel", "Turn 遊戲紀錄：本次得分 $score，今日第 $turnGamePlayCount 次，當前總分: $totalScore")
+            return true
+        }
+
+        Log.d("ViewModel", "Turn 遊戲：今天已達上限")
+        return false
+    }
+
+    /**
+     * 儲存 Turn 遊戲數據到 Firebase
+     */
+    private fun saveTurnGameDataToFirebase(email: String, date: String, count: Int) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastTurnGameDate" to date,
+                    "turnGamePlayCount" to count,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "Turn 遊戲數據儲存成功: 日期=$date, 次數=$count")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "Turn 遊戲數據儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 從 Firebase 載入 Turn 遊戲數據
+     */
+    fun loadTurnGameDataFromFirebase(email: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    lastTurnGameDate = document.getString("lastTurnGameDate") ?: ""
+                    turnGamePlayCount = (document.getLong("turnGamePlayCount")?.toInt()) ?: 0
+
+                    // 檢查是否為新的一天
+                    val today = LocalDate.now().toString()
+                    if (lastTurnGameDate != today) {
+                        turnGamePlayCount = 0
+                    }
+
+                    Log.d("ViewModel", "載入 Turn 遊戲數據: 日期=$lastTurnGameDate, 次數=$turnGamePlayCount")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "載入 Turn 遊戲數據失敗: ${e.message}")
+            }
+    }
+
+    // GarbageGame 相關狀態
+    private val _lastGarbageGameDate = mutableStateOf("")
+    var lastGarbageGameDate: String
+        get() = _lastGarbageGameDate.value
+        set(value) { _lastGarbageGameDate.value = value }
+
+    private val _garbageGamePlayCount = mutableStateOf(0)
+    var garbageGamePlayCount: Int
+        get() = _garbageGamePlayCount.value
+        set(value) { _garbageGamePlayCount.value = value }
+
+    /**
+     * 檢查今天是否可以玩 GarbageGame
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     * @return true 表示今天還有遊玩機會
+     */
+    fun canPlayGarbageGame(maxPlays: Int = 3): Boolean {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，重置計數
+        if (lastGarbageGameDate != today) {
+            garbageGamePlayCount = 0
+            lastGarbageGameDate = today
+        }
+
+        return garbageGamePlayCount < maxPlays
+    }
+
+    /**
+     * 獲取今日剩餘 GarbageGame 遊玩次數
+     * @param maxPlays 每天最大遊玩次數，默認為3次
+     */
+    fun getRemainingGarbageGamePlays(maxPlays: Int = 3): Int {
+        val today = LocalDate.now().toString()
+
+        // 如果是新的一天，返回最大次數
+        if (lastGarbageGameDate != today) {
+            return maxPlays
+        }
+
+        return maxPlays - garbageGamePlayCount
+    }
+
+    /**
+     * 紀錄一次 GarbageGame 遊玩（遊戲結束時調用）
+     * @param email 使用者 email
+     * @param score 本次遊戲得分
+     * @return true 表示成功紀錄，false 表示今天已達上限
+     */
+    fun recordGarbageGamePlay(email: String, score: Int): Boolean {
+        if (canPlayGarbageGame()) {
+            val today = LocalDate.now().toString()
+
+            // 如果是新的一天，重置計數
+            if (lastGarbageGameDate != today) {
+                garbageGamePlayCount = 0
+                lastGarbageGameDate = today
+            }
+
+            garbageGamePlayCount += 1
+            totalScore += score  // 添加分數
+
+            // 儲存到 Firebase
+            saveGarbageGameDataToFirebase(email, today, garbageGamePlayCount)
+
+            Log.d("ViewModel", "GarbageGame 紀錄：本次得分 $score，今日第 $garbageGamePlayCount 次，當前總分: $totalScore")
+            return true
+        }
+
+        Log.d("ViewModel", "GarbageGame：今天已達上限")
+        return false
+    }
+
+    /**
+     * 儲存 GarbageGame 數據到 Firebase
+     */
+    private fun saveGarbageGameDataToFirebase(email: String, date: String, count: Int) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastGarbageGameDate" to date,
+                    "garbageGamePlayCount" to count,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "GarbageGame 數據儲存成功: 日期=$date, 次數=$count")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "GarbageGame 數據儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 從 Firebase 載入 GarbageGame 數據
+     */
+    fun loadGarbageGameDataFromFirebase(email: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    lastGarbageGameDate = document.getString("lastGarbageGameDate") ?: ""
+                    garbageGamePlayCount = (document.getLong("garbageGamePlayCount")?.toInt()) ?: 0
+
+                    // 檢查是否為新的一天
+                    val today = LocalDate.now().toString()
+                    if (lastGarbageGameDate != today) {
+                        garbageGamePlayCount = 0
+                    }
+
+                    Log.d("ViewModel", "載入 GarbageGame 數據: 日期=$lastGarbageGameDate, 次數=$garbageGamePlayCount")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "載入 GarbageGame 數據失敗: ${e.message}")
             }
     }
 

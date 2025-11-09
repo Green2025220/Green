@@ -50,7 +50,7 @@ fun CustomButton(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
+fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail: String) {
     // 題庫
     val questions = remember {
         listOf(
@@ -245,6 +245,11 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
     var gameOver by remember { mutableStateOf(false) }
     val maxQuestions = 5 // 設定遊戲總題數
 
+    val maxPlaysPerDay = 3  // 每天最多玩3次
+    var showLimitDialog by remember { mutableStateOf(false) }
+    var canPlay by remember { mutableStateOf(true) }
+    var remainingPlays by remember { mutableStateOf(maxPlaysPerDay) }
+
     // 選擇隨機題目
     fun getNextRandomQuestion() {
         if (usedQuestionIndices.size >= minOf(maxQuestions, questions.size)) {
@@ -263,9 +268,18 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
         usedQuestionIndices.add(randomIndex)
     }
 
-    // 初始載入第一題
+    // 【重要】只保留一個 LaunchedEffect，合併兩個功能
     LaunchedEffect(key1 = Unit) {
-        getNextRandomQuestion()
+        // 檢查遊玩次數
+        canPlay = viewModel.canPlayQuizGame(maxPlaysPerDay)
+        remainingPlays = viewModel.getRemainingQuizGamePlays(maxPlaysPerDay)
+
+        if (!canPlay) {
+            showLimitDialog = true
+        } else {
+            // 如果可以玩，載入第一題
+            getNextRandomQuestion()
+        }
     }
 
     // 處理答題
@@ -317,24 +331,92 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
             )
         }
 
-        // 分數顯示
-        Text(
-            text = "分數: $score",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
+        Row(
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.TopEnd)
                 .background(Color(0x88000000), shape = RoundedCornerShape(8.dp))
-                .padding(8.dp)
-        )
+                .padding(8.dp),  // 整體內邊距
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "分數: $score",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            // 分隔線（可選）
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(Color.White.copy(alpha = 0.5f))
+            )
+
+            Text(
+                text = "今日剩餘: $remainingPlays 次",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+        //次數用完提示對話框
+        if (showLimitDialog) {
+            AlertDialog(
+                onDismissRequest = { },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.cross1),
+                            contentDescription = "提示",
+                            modifier = Modifier.size(60.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "今日次數已用完",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "您今天已經玩過 $maxPlaysPerDay 次了\n明天再来挑戰吧！",
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("確定")
+                    }
+                },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            )
+        }
 
         // 題目顯示
-        if (!gameOver) {
+        if (!gameOver && canPlay) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // 題目文字區域
@@ -375,7 +457,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
                     }
                 }
             }
-        } else {
+        } else if (gameOver && canPlay)  {
             // 遊戲結束畫面
             Box(
                 modifier = Modifier
@@ -402,10 +484,21 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel) {
                         fontSize = 24.sp,
                         color = Color.White
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val newRemainingPlays = remainingPlays - 1
+                    Text(
+                        text = if (newRemainingPlays > 0)
+                            "今日還可遊玩 $newRemainingPlays 次"
+                        else
+                            "今日次數已用完，明天再來！",
+                        fontSize = 18.sp,
+                        color = Color.Yellow
+                    )
+
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = {
-                            viewModel.updateTotalScore(score)// 在 ViewModel 中更新總分
+                            viewModel.recordQuizGamePlay(userEmail, score)// 在 ViewModel 中更新總分
                             navController.popBackStack() }
                     ) {
                         Text("回到主選單")
