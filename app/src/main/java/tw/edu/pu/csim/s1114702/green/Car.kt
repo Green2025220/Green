@@ -142,7 +142,7 @@ fun CarScreen(navController: NavController,
             text = {
                 Column {
                     Text("完成碳排放記錄！")
-                    Text("獲得 1 點環保分數")
+                    Text("獲得 5 分")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
@@ -171,7 +171,7 @@ fun CarScreen(navController: NavController,
             title = { Text("今日已記錄") },
             text = {
                 Column {
-                    Text("您今天已經獲得過環保分數了")
+                    Text("您今天已經獲得過分數了")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
@@ -255,7 +255,7 @@ fun CarScreen(navController: NavController,
                 ) {
                     if (canGetReward) {
                         Text(
-                            "💚 今日尚未記錄 (可獲得 1 分)",
+                            "💚 今日尚未記錄 (可獲得 5 分)",
                             color = Color(0xFF2CA673),
                             fontSize = 14.sp
                         )

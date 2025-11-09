@@ -332,7 +332,7 @@ class ViewModel : ViewModel() {
     }
 
     /**
-     * 碳排放計算器獎勵 - 每天第一次使用可獲得 1 分
+     * 碳排放計算器獎勵 - 每天第一次使用可獲得 5 分
      * @param email 使用者 email
      * @return true 表示成功獲得分數，false 表示今天已經獲得過
      */
@@ -340,12 +340,12 @@ class ViewModel : ViewModel() {
         if (canGetCarbonCalculatorReward()) {
             val today = LocalDate.now().toString()
             lastCarbonCalculatorDate = today
-            totalScore += 1
+            totalScore += 5
 
             // 儲存到 Firebase
             saveCarbonCalculatorDateToFirebase(email, today)
 
-            Log.d("ViewModel", "碳排放計算器獎勵：獲得 1 分，當前總分: $totalScore")
+            Log.d("ViewModel", "碳排放計算器獎勵：獲得 5 分，當前總分: $totalScore")
             return true
         }
         Log.d("ViewModel", "碳排放計算器獎勵：今天已經獲得過了")
