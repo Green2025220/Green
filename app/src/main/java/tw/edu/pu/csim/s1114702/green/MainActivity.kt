@@ -60,7 +60,29 @@ fun AppNavigation() {
             }
         }
         composable("scone") { SconeScreen(navController) }
-        // ...其他畫面
+        composable("calculator") { CalculatorScreen(navController) }
+        composable("car") { CarScreen(navController, viewModel = viewModel,userEmail = userEmail) }
+        composable("motor") { MotorScreen(navController, viewModel = viewModel,userEmail = userEmail) }
+        composable("bus") { BusScreen(navController, viewModel = viewModel,userEmail = userEmail) }
+        composable("game") { GameScreen(navController) }
+        composable("myforest") { MyforestScreen(navController, viewModel, userEmail) }
+        composable("store") { StoreScreen(navController, viewModel, userEmail) }
+        composable("Game1") { QuizGameScreen(navController, viewModel = viewModel) }
+        composable("turn") {
+            TurnScreen(
+                navController = navController,
+                viewModel = viewModel,
+                userEmail = userEmail
+            )
+        }
+        composable("Garbagegame") {
+            GarbageGameScreen(
+                navController = navController,
+                viewModel = viewModel,
+                userEmail = userEmail
+            )
+        }
+        composable("garbage") { GarbageScreen(navController) }
     }
 }
 

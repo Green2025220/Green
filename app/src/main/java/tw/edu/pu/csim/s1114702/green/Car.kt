@@ -24,14 +24,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.google.android.gms.location.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
-fun CarScreen(navController: NavController) {
+fun CarScreen(navController: NavController,
+              viewModel: ViewModel,
+              userEmail: String
+) {
 
 
     val context = LocalContext.current  // 使用 LocalContext
-
 
     var totalCarbonEmission by remember { mutableStateOf(0.0) }
     var currentSpeed by remember { mutableStateOf(0f) }
@@ -40,6 +44,22 @@ fun CarScreen(navController: NavController) {
     var totalDistance by remember { mutableStateOf(0.0) }
     var lastLocation by remember { mutableStateOf<Location?>(null) }
 
+    // 獎勵相關狀態
+    var showRewardDialog by remember { mutableStateOf(false) }
+    var showAlreadyRewardedDialog by remember { mutableStateOf(false) }
+    var canGetReward by remember { mutableStateOf(true) }
+
+    // 載入上次使用日期
+    LaunchedEffect(Unit) {
+        if (userEmail.isNotEmpty()) {
+            viewModel.loadCarbonCalculatorDateFromFirebase(userEmail)
+        }
+    }
+
+    // 檢查今天是否可以獲得獎勵
+    LaunchedEffect(viewModel.lastCarbonCalculatorDate) {
+        canGetReward = viewModel.canGetCarbonCalculatorReward()
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = RequestPermission(),
@@ -114,6 +134,64 @@ fun CarScreen(navController: NavController) {
         )
     }
 
+    // 獲得獎勵對話框
+    if (showRewardDialog) {
+        AlertDialog(
+            onDismissRequest = { showRewardDialog = false },
+            title = { Text("🎉 獲得獎勵") },
+            text = {
+                Column {
+                    Text("完成碳排放記錄！")
+                    Text("獲得 1 點環保分數")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "明天再來記錄吧！",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showRewardDialog = false }) {
+                    Text("太好了！")
+                }
+            }
+        )
+    }
+
+    // 今日已獲得獎勵對話框
+    if (showAlreadyRewardedDialog) {
+        AlertDialog(
+            onDismissRequest = { showAlreadyRewardedDialog = false },
+            title = { Text("今日已記錄") },
+            text = {
+                Column {
+                    Text("您今天已經獲得過環保分數了")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "明天再來繼續記錄碳排放吧！",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showAlreadyRewardedDialog = false }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -166,8 +244,30 @@ fun CarScreen(navController: NavController) {
                 Text("中型汽油車碳排放計算器", fontSize = 24.sp, color = Color.Black)
 
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
+                // 今日狀態提示
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (canGetReward) {
+                        Text(
+                            "💚 今日尚未記錄 (可獲得 1 分)",
+                            color = Color(0xFF2CA673),
+                            fontSize = 14.sp
+                        )
+                    } else {
+                        Text(
+                            "✓ 今日已記錄",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Card(
                     modifier = Modifier.fillMaxWidth(0.9f),
@@ -202,8 +302,20 @@ fun CarScreen(navController: NavController) {
                 Button(
                     onClick = {
                         if (isCalculating) {
+                            // 停止計算
                             isCalculating = false
                             calculateCarbonEmission()
+
+                            // 嘗試獲得獎勵
+                            if (userEmail.isNotEmpty()) {
+                                val rewarded = viewModel.rewardCarbonCalculator(userEmail)
+                                if (rewarded) {
+                                    showRewardDialog = true
+                                    canGetReward = false
+                                } else {
+                                    showAlreadyRewardedDialog = true
+                                }
+                            }
                         } else {
                             isCalculating = true
                             totalDistance = 0.0

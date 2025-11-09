@@ -141,6 +141,8 @@ class ViewModel : ViewModel() {
                     val redeemed = (document["redeemedItems"] as? List<*>)?.mapNotNull { it as? String } ?: listOf()
                     val positions = document["itemPositions"] as? Map<String, Map<String, Float>> ?: mapOf()
 
+                    // 載入碳排放計算器日期
+                    lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
 
                     itemPositions.clear()
                     positions.forEach { (name, pos) ->
@@ -278,6 +280,75 @@ class ViewModel : ViewModel() {
             .addOnFailureListener { e ->
                 Log.e("ViewModel", "載入草地物品失敗: ${e.message}")
                 onLoaded(emptyList())
+            }
+    }
+
+
+    // 在 ViewModel 類別中加入
+    private val _lastCarbonCalculatorDate = mutableStateOf("")
+    var lastCarbonCalculatorDate: String
+        get() = _lastCarbonCalculatorDate.value
+        set(value) { _lastCarbonCalculatorDate.value = value }
+
+    /**
+     * 檢查今天是否可以從碳排放計算器獲得分數
+     * @return true 表示可以獲得分數，false 表示今天已經獲得過了
+     */
+    fun canGetCarbonCalculatorReward(): Boolean {
+        val today = LocalDate.now().toString()
+        return lastCarbonCalculatorDate != today
+    }
+
+    /**
+     * 碳排放計算器獎勵 - 每天第一次使用可獲得 1 分
+     * @param email 使用者 email
+     * @return true 表示成功獲得分數，false 表示今天已經獲得過
+     */
+    fun rewardCarbonCalculator(email: String): Boolean {
+        if (canGetCarbonCalculatorReward()) {
+            val today = LocalDate.now().toString()
+            lastCarbonCalculatorDate = today
+            totalScore += 1
+
+            // 儲存到 Firebase
+            saveCarbonCalculatorDateToFirebase(email, today)
+
+            Log.d("ViewModel", "碳排放計算器獎勵：獲得 1 分，當前總分: $totalScore")
+            return true
+        }
+        Log.d("ViewModel", "碳排放計算器獎勵：今天已經獲得過了")
+        return false
+    }
+
+    /**
+     * 儲存碳排放計算器最後使用日期到 Firebase
+     */
+    private fun saveCarbonCalculatorDateToFirebase(email: String, date: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update("lastCarbonCalculatorDate", date)
+            .addOnSuccessListener {
+                Log.d("ViewModel", "碳排放計算器日期儲存成功: $date")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "碳排放計算器日期儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 從 Firebase 載入碳排放計算器最後使用日期
+     */
+    fun loadCarbonCalculatorDateFromFirebase(email: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
+                    Log.d("ViewModel", "載入碳排放計算器日期: $lastCarbonCalculatorDate")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "載入碳排放計算器日期失敗: ${e.message}")
             }
     }
 }
