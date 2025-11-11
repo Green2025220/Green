@@ -166,6 +166,67 @@ fun ImageProxy.toBitmap(context: Context): Bitmap {
     return converter.yuvToRgb(this)
 }
 
+@Composable
+fun CooldownDisplay(
+    lastRewardTime: Long,
+    cooldownDuration: Long,
+    remainingRewards: Int
+) {
+    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(lastRewardTime) {
+        if (lastRewardTime > 0) {
+            while (true) {
+                currentTime = System.currentTimeMillis()
+                val timeSinceLastReward = currentTime - lastRewardTime
+
+                if (timeSinceLastReward >= cooldownDuration) {
+                    // 冷卻結束
+                    break
+                }
+
+                // 每 100 毫秒更新一次
+                kotlinx.coroutines.delay(100)
+            }
+        }
+    }
+
+    val timeSinceLastReward = currentTime - lastRewardTime
+    val isInCooldown = timeSinceLastReward < cooldownDuration && lastRewardTime > 0
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        when {
+            isInCooldown -> {
+                val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
+                Text(
+                    "⏱️ 冷卻中... (${remainingCooldown}秒)",
+                    color = Color(0xFFFF9800),
+                    fontSize = 14.sp
+                )
+            }
+            remainingRewards > 0 -> {
+                Text(
+                    "💚 今日剩餘獎勵次數: $remainingRewards/3",
+                    color = Color(0xFF2CA673),
+                    fontSize = 14.sp
+                )
+            }
+            else -> {
+                Text(
+                    "✓ 今日已達上限 (3/3)",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GarbageScreen(navController: NavController,
@@ -189,24 +250,6 @@ fun GarbageScreen(navController: NavController,
     var lastRewardTime by remember { mutableStateOf(0L) }  // 上次獲得獎勵的時間戳
     val cooldownDuration = 5000L  // 冷卻時間 5 秒
 
-    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
-
-    LaunchedEffect(lastRewardTime) {
-        if (lastRewardTime > 0) {
-            while (true) {
-                currentTime = System.currentTimeMillis()
-                val timeSinceLastReward = currentTime - lastRewardTime
-
-                if (timeSinceLastReward >= cooldownDuration) {
-                    // 冷卻結束
-                    break
-                }
-
-                // 每 100 毫秒更新一次（比較平衡性能和流暢度）
-                kotlinx.coroutines.delay(100)
-            }
-        }
-    }
 
     //載入一拍即分數據
     LaunchedEffect(Unit) {
@@ -375,24 +418,20 @@ fun GarbageScreen(navController: NavController,
                                                                                         lastRewardTime = currentTime
 
                                                                                         Log.d("GarbageScreen", "獲得獎勵！分類: $categoryResult, 信心度: ${score * 100}%")
+                                                                                        // ✅ 只在實際獲得獎勵時才重置
+                                                                                        consecutiveCount = 0
+                                                                                        lastDetectedLabel = ""
                                                                                     } else {
                                                                                         // 已達上限,不顯示對話框
                                                                                         Log.d("GarbageScreen", "今日已達上限")
                                                                                     }
 
-                                                                                    // 重置連續計數，避免重複獎勵
-                                                                                    consecutiveCount = 0
-                                                                                    lastDetectedLabel = ""
                                                                                 }else {
                                                                                     // 在冷卻期間
                                                                                     val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
                                                                                     Log.d("GarbageScreen", "冷卻中，剩餘 $remainingCooldown 秒")
 
-                                                                                    // 重置連續計數，避免繼續累積
-                                                                                    consecutiveCount = 0
-                                                                                    lastDetectedLabel = ""
                                                                                 }
-
                                                                             }
 
                                                                         } else {
@@ -458,42 +497,12 @@ fun GarbageScreen(navController: NavController,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    // 今日獎勵狀態
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-
-                        val timeSinceLastReward = currentTime - lastRewardTime
-                        val isInCooldown = timeSinceLastReward < cooldownDuration && lastRewardTime > 0
-
-                        when {
-                            isInCooldown -> {
-                                val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
-                                Text(
-                                    "⏱️ 冷卻中... (${remainingCooldown}秒)",
-                                    color = Color(0xFFFF9800),
-                                    fontSize = 14.sp
-                                )
-                            }
-                            remainingRewards > 0 -> {
-                                Text(
-                                    "💚 今日剩餘獎勵次數: $remainingRewards/3",
-                                    color = Color(0xFF2CA673),
-                                    fontSize = 14.sp
-                                )
-                            }
-                            else -> {
-                                Text(
-                                    "✓ 今日已達上限 (3/3)",
-                                    color = Color.Gray,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
-                    }
+                    // ✅ 使用獨立的 CooldownDisplay 組件
+                    CooldownDisplay(
+                        lastRewardTime = lastRewardTime,
+                        cooldownDuration = cooldownDuration,
+                        remainingRewards = remainingRewards
+                    )
 
                     Text(
                         text = if (objectDetector != null) "模型已載入" else "模型載入失敗",
