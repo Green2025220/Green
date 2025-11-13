@@ -113,7 +113,7 @@ fun GameScreen(navController: NavController) {
 
 @Composable
 fun InfoDialog(onDismiss: () -> Unit) {
-    val pages = listOf(R.drawable.c1, R.drawable.c2, R.drawable.c3)
+    val pages = listOf(R.drawable.d2, R.drawable.d1, R.drawable.d3)
     var currentPageIndex by remember { mutableStateOf(0) }
 
     Box(
