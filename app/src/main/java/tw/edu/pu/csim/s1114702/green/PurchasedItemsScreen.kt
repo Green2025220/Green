@@ -42,7 +42,7 @@ fun PurchasedItemsScreen(navController: NavController, viewModel: ViewModel) {
         StoreItem(R.drawable.s18, "狐狸", 20, R.drawable.fox, "動物類"),
         StoreItem(R.drawable.s19, "兔子", 20, R.drawable.rabbit, "動物類"),
         StoreItem(R.drawable.s20, "蝴蝶", 20, R.drawable.butterfly, "動物類"),
-        StoreItem(R.drawable.s9, "拖拉機", 30, R.drawable.tractor, "物品類"),
+        StoreItem(R.drawable.s9, "拖拉機", 10, R.drawable.tractor, "物品類"),
         StoreItem(R.drawable.s15, "小苒", 30, R.drawable.girl1, "人物類"),
         StoreItem(R.drawable.s16, "小薇", 30, R.drawable.girl2, "人物類"),
         StoreItem(R.drawable.s17, "小浩", 30, R.drawable.boy1, "人物類"),

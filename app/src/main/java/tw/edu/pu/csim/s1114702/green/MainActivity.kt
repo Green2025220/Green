@@ -67,6 +67,7 @@ fun AppNavigation() {
         composable("game") { GameScreen(navController) }
         composable("myforest") { MyforestScreen(navController, viewModel, userEmail) }
         composable("store") { StoreScreen(navController, viewModel, userEmail) }
+        composable("purchasedItems") { PurchasedItemsScreen(navController, viewModel) }
         composable("Game1") { QuizGameScreen(navController, viewModel = viewModel, userEmail = userEmail) }
         composable("turn") {
             TurnScreen(
