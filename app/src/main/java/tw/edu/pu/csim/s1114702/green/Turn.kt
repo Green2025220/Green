@@ -657,6 +657,7 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
     private fun resumeTimer() {
         if (!timerRunning) {
             timerRunning = true
+
             startTime = System.currentTimeMillis() - pausedTime
             CoroutineScope(Dispatchers.Main).launch {
                 while (timerRunning) {
