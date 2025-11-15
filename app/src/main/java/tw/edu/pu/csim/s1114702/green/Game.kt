@@ -64,13 +64,13 @@ fun GameScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .padding(16.dp)
-                .size(50.dp)
+                .size(35.dp)
                 .clickable { showInfoDialog = true }
                 .align(Alignment.TopEnd)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.tool),
-                contentDescription = "tool",
+                painter = painterResource(id = R.drawable.information),
+                contentDescription = "information",
                 modifier = Modifier.fillMaxSize()
             )
         }
