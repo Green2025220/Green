@@ -15,18 +15,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import kotlin.random.Random
 
+// 定義自定義字體
+val SentyDragonPalaceFont = FontFamily(
+    Font(R.font.senty_dragon_palace) // 確保字體文件名稱為 senty_dragon_palace.ttf
+)
+
 // 問題資料模型
 data class Question(
     val questionText: String,
-    val imageResource: Int? = null, // 如果您想為每個問題提供不同的圖片
+    val imageResource: Int? = null,
     val options: List<String>,
     val correctAnswerIndex: Int
 )
@@ -37,8 +43,8 @@ fun CustomButton(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .width(250.dp)
             .height(80.dp)
-            .background(Color(0xFFB8E6C0), shape = RoundedCornerShape(40.dp)) // 圓角矩形
-            .clickable { onClick() },  // 處理點擊事件
+            .background(Color(0xFFB8E6C0), shape = RoundedCornerShape(40.dp))
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -61,7 +67,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                 1
             ),
             Question(
-                "小張正在收拾廚房的桌面，看到桌上有個玻璃瓶，他準備把瓶子丟進垃圾桶，但猶豫了一下，問小王：「這瓶玻璃應該怎麼處理？我記得玻璃是可以回收的對吧？」",
+                "小張正在收拾廚房的桌面，看到桌上有個玻璃瓶，他準備把瓶子丟進垃圾桶，但猶豫了一下,問小王：「這瓶玻璃應該怎麼處理？我記得玻璃是可以回收的對吧？」",
                 R.drawable.question2,
                 listOf("可回收", "一般垃圾"),
                 0
@@ -221,7 +227,8 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                 R.drawable.question28,
                 listOf("分類不同種類的塑膠","清洗乾淨再回收","全部都重要"),
                 2
-            ),Question(
+            ),
+            Question(
                 "小李和小張討論鋁罐的回收，他問小王：「回收後的鋁罐可以被製成什麼？聽說它能做成很多東西。」",
                 R.drawable.question29,
                 listOf("新的鋁罐", "衣服","木材","保麗龍"),
@@ -243,9 +250,9 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     var showFeedback by remember { mutableStateOf(false) }
     var isCorrect by remember { mutableStateOf(false) }
     var gameOver by remember { mutableStateOf(false) }
-    val maxQuestions = 5 // 設定遊戲總題數
+    val maxQuestions = 5
 
-    val maxPlaysPerDay = 3  // 每天最多玩3次
+    val maxPlaysPerDay = 3
     var showLimitDialog by remember { mutableStateOf(false) }
     var canPlay by remember { mutableStateOf(true) }
     var remainingPlays by remember { mutableStateOf(maxPlaysPerDay) }
@@ -254,10 +261,8 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     fun getNextRandomQuestion() {
         if (usedQuestionIndices.size >= minOf(maxQuestions, questions.size)) {
             gameOver = true
-            //viewModel.totalScore += score
             return
         }
-
 
         var randomIndex: Int
         do {
@@ -268,16 +273,13 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
         usedQuestionIndices.add(randomIndex)
     }
 
-    // 【重要】只保留一個 LaunchedEffect，合併兩個功能
     LaunchedEffect(key1 = Unit) {
-        // 檢查遊玩次數
         canPlay = viewModel.canPlayQuizGame(maxPlaysPerDay)
         remainingPlays = viewModel.getRemainingQuizGamePlays(maxPlaysPerDay)
 
         if (!canPlay) {
             showLimitDialog = true
         } else {
-            // 如果可以玩，載入第一題
             getNextRandomQuestion()
         }
     }
@@ -288,7 +290,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
         isCorrect = selectedIndex == currentQuestion.correctAnswerIndex
 
         if (isCorrect) {
-            score += 10 // 答對加10分
+            score += 10
         }
 
         showFeedback = true
@@ -336,18 +338,17 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                 .padding(16.dp)
                 .align(Alignment.TopEnd)
                 .background(Color(0x88000000), shape = RoundedCornerShape(8.dp))
-                .padding(8.dp),  // 整體內邊距
+                .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "分數: $score",
-                fontSize = 24.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
 
-            // 分隔線（可選）
             Box(
                 modifier = Modifier
                     .width(1.dp)
@@ -362,7 +363,8 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                 color = Color.White
             )
         }
-        //次數用完提示對話框
+
+        // 次數用完提示對話框
         if (showLimitDialog) {
             AlertDialog(
                 onDismissRequest = { },
@@ -457,7 +459,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                     }
                 }
             }
-        } else if (gameOver && canPlay)  {
+        } else if (gameOver && canPlay) {
             // 遊戲結束畫面
             Box(
                 modifier = Modifier
@@ -498,8 +500,9 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
                         onClick = {
-                            viewModel.recordQuizGamePlay(userEmail, score)// 在 ViewModel 中更新總分
-                            navController.popBackStack() }
+                            viewModel.recordQuizGamePlay(userEmail, score)
+                            navController.popBackStack()
+                        }
                     ) {
                         Text("回到主選單")
                     }
@@ -517,7 +520,6 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // 正確/錯誤圖示
                         Image(
                             painter = painterResource(
                                 id = if (isCorrect) R.drawable.circle1 else R.drawable.cross1
@@ -528,7 +530,6 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // 標題文字
                         Text(
                             text = if (isCorrect) "答對了！" else "答錯了！",
                             fontWeight = FontWeight.Bold,
@@ -548,8 +549,6 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                                 "正確答案是: ${questions[questionIndex].options[questions[questionIndex].correctAnswerIndex]}",
                             textAlign = TextAlign.Center
                         )
-
-                        // 您也可以在這裡添加更多的內容或圖像
                     }
                 },
                 confirmButton = {
@@ -560,7 +559,6 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
                         Text("下一題")
                     }
                 },
-                // 設置對話框樣式
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth()
@@ -586,7 +584,8 @@ fun AnswerButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
             text = text,
             fontSize = 20.sp,
             color = Color.Black,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            fontFamily = SentyDragonPalaceFont  // 使用自定義字體
         )
     }
 }

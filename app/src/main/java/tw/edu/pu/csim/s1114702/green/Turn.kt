@@ -37,12 +37,189 @@ fun TurnScreen(
     userEmail: String,
     turnViewModel: TurnViewModel = viewModel()
 ) {
+    val cards = turnViewModel.cards
+    val lockBoard by turnViewModel.lockBoard
+    val pairsFound by turnViewModel.pairsFound
+    val elapsedTime by turnViewModel.elapsedTime
+    val showMatchedCard by turnViewModel.showMatchedCard
+    val matchedCardImageRes by turnViewModel.matchedCardImageRes
+    val score by turnViewModel.score
+
     // 檢查是否還能遊玩
     val canPlay = viewModel.canPlayTurnGame()
     val remainingPlays = viewModel.getRemainingTurnGamePlays()
 
-    // 如果今天次數已用完，顯示提示畫面
-    if (!canPlay) {
+    LaunchedEffect(Unit) {
+        turnViewModel.startTimer()
+    }
+
+    // 取得螢幕寬高
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+
+    val horizontalPadding = 24.dp * 2
+    val cardSpacing = 6.dp
+
+    val cardWidth = (screenWidth - horizontalPadding - cardSpacing * 3) / 3
+    val verticalPadding = 24.dp * 2 + 24.dp + 24.dp + 20.dp + 28.dp + 22.dp + 16.dp
+    val cardHeight = ((screenHeight - verticalPadding - cardSpacing * 4) / 4).coerceAtMost(cardWidth)
+    val cardSize = cardHeight
+
+    // 計算分鐘與秒
+    val totalSeconds = elapsedTime / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+
+    // 當遊戲完成時，自動加分（只執行一次）
+    LaunchedEffect(pairsFound) {
+        if (pairsFound == cards.size / 2) {
+            turnViewModel.addScoreToViewModel(viewModel, userEmail)
+        }
+    }
+
+    // 優先判斷：如果遊戲已完成，顯示完成頁面（即使次數用完也要顯示）
+    if (pairsFound == cards.size / 2) {
+        // 遊戲完成頁面
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF81C0C0))
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("恭喜您完成挑戰！", fontSize = 28.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 用時和分數顯示在同一行
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 用時顯示
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFCAFFFF),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("用時: ${minutes}m ${seconds}s", fontSize = 16.sp, color = Color.Black)
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // 分數顯示（樣式和用時一樣）
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFCAFFFF),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("獲得分數: $score 分", fontSize = 16.sp, color = Color.Black)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 水平滾動的配對卡牌列表
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    turnViewModel.matchedPairs.forEach { pair ->
+                        // 每一組卡牌的容器
+                        Column(
+                            modifier = Modifier
+                                .width(280.dp)
+                                .background(
+                                    color = Color.White.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // a 和 b 圖片並排在上方
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = pair.aImageRes),
+                                    contentDescription = "A Card",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.size(100.dp)
+                                )
+
+                                Image(
+                                    painter = painterResource(id = pair.bImageRes),
+                                    contentDescription = "B Card",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.size(100.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // c 圖片在下方
+                            Image(
+                                painter = painterResource(id = pair.cImageRes),
+                                contentDescription = "C Card",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.size(220.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        turnViewModel.resetGame()
+                        navController.navigate("scone")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003060)),
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text("返回主頁", fontSize = 20.sp)
+                }
+            }
+
+            // 煙火特效
+            FireworksEffect()
+
+            // 返回按鈕
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .clickable { navController.popBackStack() }
+                    .align(Alignment.TopStart)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.backarrow),
+                    contentDescription = "Back"
+                )
+            }
+        }
+    }
+    // 次要判斷：如果遊戲未完成且次數用完，顯示次數用完頁面
+    else if (!canPlay) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -95,192 +272,9 @@ fun TurnScreen(
                 )
             }
         }
-        return  // 提前結束，不顯示遊戲內容
     }
-
-    val cards = turnViewModel.cards
-    val lockBoard by turnViewModel.lockBoard
-    val pairsFound by turnViewModel.pairsFound
-    val elapsedTime by turnViewModel.elapsedTime
-    val showMatchedCard by turnViewModel.showMatchedCard
-    val matchedCardImageRes by turnViewModel.matchedCardImageRes
-    val score by turnViewModel.score
-
-
-
-    LaunchedEffect(Unit) {
-        turnViewModel.startTimer()
-    }
-
-
-    // 取得螢幕寬高
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val screenHeight = configuration.screenHeightDp.dp
-
-
-    val horizontalPadding = 24.dp * 2
-    val cardSpacing = 6.dp
-
-
-    val cardWidth = (screenWidth - horizontalPadding - cardSpacing * 3) / 3
-    val verticalPadding = 24.dp * 2 + 24.dp + 24.dp + 20.dp + 28.dp + 22.dp + 16.dp
-    val cardHeight = ((screenHeight - verticalPadding - cardSpacing * 4) / 4).coerceAtMost(cardWidth)
-    val cardSize = cardHeight
-
-
-    // 計算分鐘與秒
-    val totalSeconds = elapsedTime / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-
-    // 當遊戲完成時，自動加分（只執行一次）
-    LaunchedEffect(pairsFound) {
-        if (pairsFound == cards.size / 2) {
-            turnViewModel.addScoreToViewModel(viewModel, userEmail)
-        }
-    }
-
-    if (pairsFound == cards.size / 2) {
-        // 遊戲完成頁面
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF81C0C0))
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("恭喜您完成挑戰！", fontSize = 28.sp, color = Color.Black, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 用時和分數顯示在同一行
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 用時顯示
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFFCAFFFF),
-                                shape = RoundedCornerShape(50)
-                            )
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                    ) {
-                        Text("用時: ${minutes}m ${seconds}s", fontSize = 20.sp, color = Color.Black)
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // 分數顯示（樣式和用時一樣）
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFFCAFFFF),
-                                shape = RoundedCornerShape(50)
-                            )
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                    ) {
-                        Text("獲得分數: $score 分", fontSize = 20.sp, color = Color.Black)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // 水平滾動的配對卡牌列表
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .horizontalScroll(rememberScrollState())
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    turnViewModel.matchedPairs.forEach { pair ->
-                        // 每一組卡牌的容器
-                        Column(
-                            modifier = Modifier
-                                .width(220.dp)
-                                .background(
-                                    color = Color.White.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                                .padding(20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // a 和 b 圖片並排在上方
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Image(
-                                    painter = painterResource(id = pair.aImageRes),
-                                    contentDescription = "A Card",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(80.dp)
-                                )
-
-                                Image(
-                                    painter = painterResource(id = pair.bImageRes),
-                                    contentDescription = "B Card",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // c 圖片在下方
-                            Image(
-                                painter = painterResource(id = pair.cImageRes),
-                                contentDescription = "C Card",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.size(170.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        turnViewModel.resetGame()
-                        navController.navigate("scone")
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003060)),
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    Text("返回主頁", fontSize = 20.sp)
-                }
-            }
-
-            // 煙火特效
-            FireworksEffect()
-
-            // 返回按鈕
-            Box(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .size(40.dp)
-                    .clickable { navController.popBackStack() }
-                    .align(Alignment.TopStart)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.backarrow),
-                    contentDescription = "Back"
-                )
-            }
-        }
-    } else {
-        // 遊戲進行中顯示棋盤
+    // 遊戲進行中
+    else {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -299,12 +293,10 @@ fun TurnScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
-
                 Text("配對 $pairsFound / ${cards.size / 2}", fontSize = 24.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("用時: ${minutes}m ${seconds}s", fontSize = 20.sp)
                 Spacer(modifier = Modifier.height(24.dp))
-
 
                 // 4x4 翻牌排列
                 for (row in 0 until 4) {
@@ -312,7 +304,6 @@ fun TurnScreen(
                         for (col in 0 until 3) {
                             val index = row * 3 + col
                             val card = cards.getOrNull(index) ?: continue
-
 
                             Box(
                                 modifier = Modifier
@@ -343,7 +334,6 @@ fun TurnScreen(
                     }
                 }
             }
-
 
             // 返回按鈕
             Box(
@@ -514,7 +504,6 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
         R.drawable.c13, R.drawable.c14, R.drawable.c15, R.drawable.c16, R.drawable.c17
     )
 
-
     val cards = mutableStateListOf<Card>()
     var firstFlippedIndex = mutableStateOf<Int?>(null)
     var lockBoard = mutableStateOf(false)
@@ -531,11 +520,9 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
     private var timerRunning = false
     private var pausedTime = 0L
 
-
     init {
         resetGame()
     }
-
 
     fun resetGame() {
         cards.clear()
@@ -588,7 +575,6 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
         }
     }
 
-
     fun flipCard(index: Int) {
         if (lockBoard.value || cards[index].isFlipped || cards[index].isMatched) return
 
@@ -615,7 +601,7 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
 
                 pauseTimer()
 
-                // 延遲 2 秒後顯示對應的 c 系列卡牌
+                // 延遲 1 秒後顯示對應的 c 系列卡牌
                 CoroutineScope(Dispatchers.Main).launch {
                     delay(1000)
                     matchedCardImageRes.value = cImages[pairIndex]
@@ -660,7 +646,6 @@ class TurnViewModel : androidx.lifecycle.ViewModel() {
             }
         }
     }
-
 
     private fun pauseTimer() {
         if (timerRunning) {
