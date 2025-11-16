@@ -547,7 +547,8 @@ fun GarbageScreen(navController: NavController,
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(20.dp)
+                                .offset(y = -10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
