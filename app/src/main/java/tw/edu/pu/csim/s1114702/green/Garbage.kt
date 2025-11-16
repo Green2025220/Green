@@ -197,7 +197,7 @@ fun CooldownDisplay(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp),
+            .padding(top = 24.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         when {
@@ -300,7 +300,7 @@ fun GarbageScreen(navController: NavController,
             text = {
                 Column {
                     Text("成功辨識垃圾分類！")
-                    Text("獲得 1 點環保分數")
+                    Text("獲得 1 分")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "辨識結果: $lastRewardedCategory",
@@ -511,15 +511,43 @@ fun GarbageScreen(navController: NavController,
                             MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
                     )
 
-                    Card(
+                    Box(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        contentAlignment = Alignment.Center
                     ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.garbagetext),
+                            contentDescription = "結果背景",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = -10.dp),
+                            contentScale = ContentScale.FillWidth
+                        )
+                        Image(
+                            painter = painterResource(id = R.drawable.garbageflow1),
+                            contentDescription = "左下角裝飾",
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .size(60.dp)
+                                .offset(x = -10.dp, y = 15.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                        Image(
+                            painter = painterResource(id = R.drawable.garbageflow2),
+                            contentDescription = "右下角裝飾",
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(110.dp)
+                                .offset(x = 8.dp, y = 15.dp),
+                            contentScale = ContentScale.Fit
+                        )
                         Column(
-                            modifier = Modifier.padding(20.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -568,6 +596,26 @@ fun GarbageScreen(navController: NavController,
                     }
                 }
             }
+/*
+            Image(
+                painter = painterResource(id = R.drawable.garbageflow1),
+                contentDescription = "左下角裝飾",
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .size(60.dp)
+                    .padding(start = 8.dp, bottom = 0.dp),
+                contentScale = ContentScale.Fit
+            )
+            Image(
+                painter = painterResource(id = R.drawable.garbageflow2),
+                contentDescription = "右下角裝飾",
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(110.dp)
+                    .padding(0.dp),
+                contentScale = ContentScale.Fit
+            )
+ */
         }
     }
 }
