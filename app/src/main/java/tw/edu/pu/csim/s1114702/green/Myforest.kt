@@ -155,6 +155,7 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
     val context = LocalContext.current
 
     var basketOpen by remember { mutableStateOf(false) }
+    var showforestInfoDialog by remember { mutableStateOf(false) }
 
     // 追蹤是否有未儲存的變更
     var hasUnsavedChanges by remember { mutableStateOf(false) }
@@ -188,7 +189,7 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
         }
     }
 
-    // 監控 placedItems 變化，判斷是否有未儲存的變更
+    // 監控 placedItems 變化,判斷是否有未儲存的變更
     LaunchedEffect(placedItems) {
         if (initialPlacedItems.isNotEmpty()) {
             hasUnsavedChanges = placedItems != initialPlacedItems
@@ -284,13 +285,32 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
             )
         }
 
-        // 儲存按鈕（右上）- 顯示儲存狀態
+        // 儲存按鈕和資訊按鈕（右上）
         Box(
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.TopEnd)
         ) {
-            Column(horizontalAlignment = Alignment.End) {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 資訊按鈕
+                Box(
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clickable { showforestInfoDialog = true }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.information),
+                        contentDescription = "information",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 儲存按鈕
                 Button(
                     onClick = { saveChanges() },
                     colors = ButtonDefaults.buttonColors(
@@ -303,8 +323,6 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
                         color = Color.White
                     )
                 }
-
-
             }
         }
 
@@ -409,6 +427,58 @@ fun MyforestScreen(navController: NavController, viewModel: ViewModel, userEmail
                         }
                     }
                 }
+            }
+        }
+
+        // 資訊對話框
+        if (showforestInfoDialog) {
+            forestInfoDialog(onDismiss = { showforestInfoDialog = false })
+        }
+    }
+}
+
+@Composable
+fun forestInfoDialog(onDismiss: () -> Unit) {
+    val pages = listOf(R.drawable.f1)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.7f))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .clickable { /* 防止點擊內容時關閉 */ }
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 顯示圖片
+                Image(
+                    painter = painterResource(id = pages[0]),
+                    contentDescription = "Forest Info",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(500.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 關閉按鈕
+                Text(
+                    text = "關閉",
+                    fontSize = 18.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .background(Color(0xFF408080))
+                        .padding(horizontal = 32.dp, vertical = 12.dp)
+                        .clickable { onDismiss() }
+                )
             }
         }
     }
