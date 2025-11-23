@@ -15,6 +15,10 @@
         android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- 網路權限(gemini) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
 
     <application
         android:allowBackup="true"

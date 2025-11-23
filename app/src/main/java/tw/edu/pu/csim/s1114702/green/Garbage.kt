@@ -35,6 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 // ====== 垃圾分類表 ======
@@ -197,7 +201,7 @@ fun CooldownDisplay(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 8.dp),
+            .padding(top = 48.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         when {
@@ -235,6 +239,13 @@ fun GarbageScreen(navController: NavController,
                   ) {
     val localContext = LocalContext.current
 
+    // ===== Gemini 相關狀態 =====
+    val geminiClassifier = remember {
+        GeminiClassifier("AIzaSyBD-q5cOcT1onwMyvAdKgi83S9MR7Z-3OQ")
+    }
+    var isAIAnalyzing by remember { mutableStateOf(false) }
+    var aiReason by remember { mutableStateOf("") }
+
     var detectedItem by remember { mutableStateOf("尚未偵測") }
     var category by remember { mutableStateOf("未知") }
     var confidence by remember { mutableStateOf(0f) }
@@ -250,6 +261,7 @@ fun GarbageScreen(navController: NavController,
     var lastRewardTime by remember { mutableStateOf(0L) }  // 上次獲得獎勵的時間戳
     val cooldownDuration = 5000L  // 冷卻時間 5 秒
 
+    var lastAnalyzedLabel by remember { mutableStateOf("") }
 
     //載入一拍即分數據
     LaunchedEffect(Unit) {
@@ -307,6 +319,13 @@ fun GarbageScreen(navController: NavController,
                         fontSize = 14.sp,
                         color = Color.Gray
                     )
+                    if (aiReason.isNotEmpty()) {
+                        Text(
+                            "AI 理由: $aiReason",
+                            fontSize = 12.sp,
+                            color = Color(0xFF2CA673)
+                        )
+                    }
                     Text(
                         "今日剩餘次數: ${remainingRewards}/3",
                         fontSize = 12.sp,
@@ -394,72 +413,116 @@ fun GarbageScreen(navController: NavController,
                                                                 if (score >= 0.3f) {
                                                                     if (label == lastDetectedLabel) {
                                                                         consecutiveCount++
-                                                                        if (consecutiveCount >= 5) {
+                                                                        if (consecutiveCount >= 5 && label != lastAnalyzedLabel && !isAIAnalyzing) {
+                                                                            // ===== 觸發 Gemini AI 分析 =====
+                                                                            lastAnalyzedLabel = label
                                                                             val chineseLabel = translateToChineseItem(label)
-                                                                            val categoryResult = classifyItem(label)
+
+                                                                            isAIAnalyzing = true
                                                                             detectedItem = chineseLabel
-                                                                            category = classifyItem(label)
+                                                                            category = "AI 分析中..."
                                                                             confidence = score
 
-                                                                            // 檢查是否可以獲得獎勵
-                                                                            if (score >= 0.5f &&
-                                                                                categoryResult != "其他" &&
-                                                                                userEmail.isNotEmpty()) {
-                                                                                val currentTime = System.currentTimeMillis()
-                                                                                val timeSinceLastReward = currentTime - lastRewardTime
+                                                                            GlobalScope.launch {
+                                                                                try {
+                                                                                    val aiResult = geminiClassifier.classifyGarbage(label, chineseLabel)
 
-                                                                                if (timeSinceLastReward >= cooldownDuration) {
-                                                                                    val rewarded = viewModel.rewardGarbageClassification(userEmail)
+                                                                                    withContext(Dispatchers.Main) {
+                                                                                        if (aiResult.isGarbage) {
+                                                                                            // 是垃圾，使用 AI 分類結果
+                                                                                            detectedItem = chineseLabel
+                                                                                            category = aiResult.category
+                                                                                            aiReason = aiResult.reason
+                                                                                            confidence = score
 
-                                                                                    if (rewarded) {
-                                                                                        lastRewardedCategory = categoryResult
-                                                                                        remainingRewards = viewModel.getRemainingGarbageRewards()
-                                                                                        showRewardDialog = true
-                                                                                        lastRewardTime = currentTime
+                                                                                            Log.d("GarbageScreen", "AI 分類結果: ${aiResult.category}, 理由: ${aiResult.reason}")
 
-                                                                                        Log.d("GarbageScreen", "獲得獎勵！分類: $categoryResult, 信心度: ${score * 100}%")
-                                                                                        // ✅ 只在實際獲得獎勵時才重置
-                                                                                        consecutiveCount = 0
-                                                                                        lastDetectedLabel = ""
-                                                                                    } else {
-                                                                                        // 已達上限,不顯示對話框
-                                                                                        Log.d("GarbageScreen", "今日已達上限")
+                                                                                            // 檢查是否可以獲得獎勵
+                                                                                            if (score >= 0.5f &&
+                                                                                                aiResult.category != "其他" &&
+                                                                                                userEmail.isNotEmpty()) {
+                                                                                                val currentTime = System.currentTimeMillis()
+                                                                                                val timeSinceLastReward = currentTime - lastRewardTime
+
+                                                                                                if (timeSinceLastReward >= cooldownDuration) {
+                                                                                                    val rewarded = viewModel.rewardGarbageClassification(userEmail)
+
+                                                                                                    if (rewarded) {
+                                                                                                        lastRewardedCategory = aiResult.category
+                                                                                                        remainingRewards = viewModel.getRemainingGarbageRewards()
+                                                                                                        showRewardDialog = true
+                                                                                                        lastRewardTime = currentTime
+
+                                                                                                        Log.d("GarbageScreen", "獲得獎勵！分類: ${aiResult.category}, 信心度: ${score * 100}%")
+
+                                                                                                        // 重置計數
+                                                                                                        consecutiveCount = 0
+                                                                                                        lastDetectedLabel = ""
+                                                                                                        lastAnalyzedLabel = ""
+                                                                                                    } else {
+                                                                                                        Log.d("GarbageScreen", "今日已達上限")
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
+                                                                                                    Log.d("GarbageScreen", "冷卻中，剩餘 $remainingCooldown 秒")
+                                                                                                }
+                                                                                            }
+                                                                                        } else {
+                                                                                            // 不是垃圾
+                                                                                            detectedItem = chineseLabel
+                                                                                            category = "非垃圾物品"
+                                                                                            aiReason = aiResult.reason
+                                                                                            confidence = score
+
+                                                                                            Log.d("GarbageScreen", "非垃圾物品: $chineseLabel")
+                                                                                        }
+                                                                                        isAIAnalyzing = false
                                                                                     }
+                                                                                } catch (e: Exception) {
+                                                                                    withContext(Dispatchers.Main) {
+                                                                                        // AI 失敗時降級使用原有分類
+                                                                                        detectedItem = chineseLabel
+                                                                                        category = classifyItem(label)
+                                                                                        aiReason = "AI 暫時無法使用"
+                                                                                        confidence = score
+                                                                                        isAIAnalyzing = false
 
-                                                                                }else {
-                                                                                    // 在冷卻期間
-                                                                                    val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
-                                                                                    Log.d("GarbageScreen", "冷卻中，剩餘 $remainingCooldown 秒")
-
+                                                                                        Log.e("GarbageScreen", "AI 分析失敗", e)
+                                                                                    }
                                                                                 }
                                                                             }
-
-                                                                        } else {
+                                                                        } else if (consecutiveCount < 5) {
                                                                             detectedItem = "辨識中... ($consecutiveCount/5)"
                                                                             category = "請保持穩定"
                                                                             confidence = score
                                                                         }
                                                                     } else {
                                                                         lastDetectedLabel = label
+                                                                        lastAnalyzedLabel = ""
                                                                         consecutiveCount = 1
                                                                         detectedItem = "辨識中... (1/5)"
                                                                         category = "請保持穩定"
                                                                         confidence = score
+                                                                        aiReason = ""
                                                                     }
                                                                 } else {
                                                                     consecutiveCount = 0
                                                                     lastDetectedLabel = ""
+                                                                    lastAnalyzedLabel = ""
                                                                     detectedItem = "請對準物件"
                                                                     category = "等待中..."
                                                                     confidence = score
+                                                                    aiReason = ""
                                                                 }
                                                             }
                                                         } else {
                                                             consecutiveCount = 0
                                                             lastDetectedLabel = ""
+                                                            lastAnalyzedLabel = ""
                                                             detectedItem = "請對準物件"
                                                             category = "等待中..."
                                                             confidence = 0f
+                                                            aiReason = ""
                                                         }
                                                     }
                                                 } catch (e: Exception) {
@@ -488,7 +551,6 @@ fun GarbageScreen(navController: NavController,
                         }
                     )
                 }
-
                 // ===== 底部結果顯示 =====
                 Column(
                     modifier = Modifier
@@ -511,7 +573,7 @@ fun GarbageScreen(navController: NavController,
                             MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
                     )
 
                     Box(
@@ -566,10 +628,10 @@ fun GarbageScreen(navController: NavController,
                                     "信心度: ${String.format("%.1f%%", confidence * 100)}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(bottom = 12.dp)
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
 
                             HorizontalDivider(
@@ -589,34 +651,45 @@ fun GarbageScreen(navController: NavController,
                                     category.contains("一般垃圾") -> MaterialTheme.colorScheme.error
                                     category.contains("廚餘") -> MaterialTheme.colorScheme.secondary
                                     category.contains("需拆解分類/視材質而定") -> MaterialTheme.colorScheme.tertiary
+                                    category.contains("AI 分析中") -> Color(0xFF2CA673)
                                     else -> MaterialTheme.colorScheme.tertiary
                                 },
                                 modifier = Modifier.padding(top = 4.dp)
                             )
+
+                            // ===== 顯示 AI 分析理由 =====
+                            if (aiReason.isNotEmpty() && !isAIAnalyzing) {
+                                Text(
+                                    "💡 $aiReason",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF666666),
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+
+                            if (isAIAnalyzing) {
+                                Row(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = Color(0xFF2CA673)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        "🤖 AI 分析中...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF2CA673)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
-/*
-            Image(
-                painter = painterResource(id = R.drawable.garbageflow1),
-                contentDescription = "左下角裝飾",
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .size(60.dp)
-                    .padding(start = 8.dp, bottom = 0.dp),
-                contentScale = ContentScale.Fit
-            )
-            Image(
-                painter = painterResource(id = R.drawable.garbageflow2),
-                contentDescription = "右下角裝飾",
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(110.dp)
-                    .padding(0.dp),
-                contentScale = ContentScale.Fit
-            )
- */
+
         }
     }
 }
