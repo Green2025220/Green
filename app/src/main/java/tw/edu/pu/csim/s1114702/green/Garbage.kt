@@ -39,7 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import tw.edu.pu.csim.s1114702.green.BuildConfig
 
 // ====== 垃圾分類表 ======
 val recycleItems = setOf(
@@ -241,7 +241,7 @@ fun GarbageScreen(navController: NavController,
 
     // ===== Gemini 相關狀態 =====
     val geminiClassifier = remember {
-        GeminiClassifier("AIzaSyBD-q5cOcT1onwMyvAdKgi83S9MR7Z-3OQ")
+        GeminiClassifier(BuildConfig.GEMINI_API_KEY)
     }
     var isAIAnalyzing by remember { mutableStateOf(false) }
     var aiReason by remember { mutableStateOf("") }

@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +20,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ✅ 從 local.properties 讀取 API Key
+        val localPropertiesFile = rootProject.file("local.properties")
+        val apiKey = if (localPropertiesFile.exists()) {
+            val properties = Properties()
+            properties.load(FileInputStream(localPropertiesFile))
+            properties.getProperty("GEMINI_API_KEY") ?: ""
+        } else {
+            ""
+        }
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -40,6 +55,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
