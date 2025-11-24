@@ -31,8 +31,7 @@ val SentyDragonPalaceFont = FontFamily(
 
 // 問題資料模型
 data class Question(
-    val questionText: String,
-    val imageResource: Int? = null,
+    val imageResource: Int,
     val options: List<String>,
     val correctAnswerIndex: Int
 )
@@ -60,186 +59,36 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     // 題庫
     val questions = remember {
         listOf(
-            Question(
-                "小王和小張剛吃完晚餐，兩人開始收拾桌面。小王喝完一杯飲料後，準備丟掉塑膠吸管，但不確定應該丟哪裡。於是他問小張：「這根塑膠吸管應該丟在哪裡？」",
-                R.drawable.question1,
-                listOf("可回收", "一般垃圾"),
-                1
-            ),
-            Question(
-                "小張正在收拾廚房的桌面，看到桌上有個玻璃瓶，他準備把瓶子丟進垃圾桶，但猶豫了一下,問小王：「這瓶玻璃應該怎麼處理？我記得玻璃是可以回收的對吧？」",
-                R.drawable.question2,
-                listOf("可回收", "一般垃圾"),
-                0
-            ),
-            Question(
-                "小王順手拿起了用過的餐巾紙，準備丟進垃圾袋，這時小張提醒他：「別忘了，這些用過的衛生紙應該丟哪裡？」小王有些疑惑，回頭問小張。？",
-                R.drawable.question3,
-                listOf("可回收", "一般垃圾"),
-                1
-            ),
-            Question(
-                "小張正在整理餐桌，看到旁邊的可樂罐，說道：「我記得這種鋁罐是可以回收的，對嗎？這個鋁罐應該放哪裡？」",
-                R.drawable.question4,
-                listOf("是", "否"),
-                0
-            ),
-            Question(
-                "小王拿起旁邊的寶特瓶，看到瓶蓋還沒有拆下來，問小張：「那這個寶特瓶的瓶蓋要回收嗎？是不是跟瓶身分開處理？」",
-                R.drawable.question5,
-                listOf("是", "否"),
-                0
-            ),
-            Question(
-                "小張和小王剛買完晚餐外賣，兩人準備將剛買回來的餐盒處理掉。小張拿起保麗龍餐盒，問小王：「這個保麗龍餐盒可以回收嗎？我記得這種東西不容易回收吧？」",
-                R.drawable.question6,
-                listOf("是","否"),
-                1
-            ),
-            Question(
-                "回到家後，小張開始整理購物袋，發現袋子裡有一個牛奶紙盒。他問小王：「這個牛奶紙盒該丟哪裡？我們是不是可以丟進回收箱？」",
-                R.drawable.question7,
-                listOf("可回收", "一般垃圾"),
-                0
-            ),
-            Question(
-                "小王發現旁邊還有一包剛吃完的即食餐的鋁箔包，他隨手拿起來，問小張：「這個用過的鋁箔包可以回收嗎？是不是需要先清理乾淨？」",
-                R.drawable.question8,
-                listOf("是","否"),
-                0
-            ),
-            Question(
-                "小張整理家裡的舊報紙時，看見一堆新聞紙堆在角落，問小王：「這些舊報紙應該丟在哪？我記得紙類可以回收，但不確定是不是所有的報紙都能回收。」",
-                R.drawable.question9,
-                listOf("可回收", "一般垃圾"),
-                0
-            ),
-            Question(
-                "小王把舊手機的電池拿出來，準備放進垃圾桶，小張馬上停住他，問道：「這個手機電池可以丟在一般垃圾裡嗎？」",
-                R.drawable.question10,
-                listOf("是", "否"),
-                1
-            ),
-            Question(
-                "小李正在整理廚房，突然一個陶瓷碗不小心摔碎了。小李看著地上的碎片，陷入了兩難，問小張：「這個破掉的陶瓷碗該丟哪裡？是丟一般垃圾嗎？還是有其他處理方式？」",
-                R.drawable.question11,
-                listOf("可回收", "一般垃圾","大型垃圾"),
-                1
-            ),
-            Question(
-                "晚餐後，小李和小張坐下來聊起下午買的珍珠奶茶。小李沒有喝完，他準備把剩下的倒掉，但發現還有一點珍珠，於是問小張：「這杯珍珠奶茶該怎麼處理？如果倒掉剩餘的液體，杯子可以回收嗎？」",
-                R.drawable.question12,
-                listOf("倒掉液體再分類回收", "直接丟垃圾桶","整杯一起回收"),
-                0
-            ),
-            Question(
-                "小李正在洗碗，看到洗碗精瓶子已經用完了，他拿起瓶子看了一會兒，問小張：「這瓶洗碗精瓶該怎麼處理？我知道塑膠瓶可以回收，但是這種瓶子裡面有一些殘留的洗潔精，要怎麼處理呢？」",
-                R.drawable.question13,
-                listOf("直接丟掉","丟入廚餘桶","清洗乾淨後回收"),
-                2
-            ),
-            Question(
-                "小李和小張一起拆開一個包裹，發現包裹上的膠帶黏在紙箱上。小李問：「膠帶黏在紙箱上，這樣能直接回收嗎？還是需要先撕掉膠帶？」",
-                R.drawable.question14,
-                listOf("可以直接回收", "需要撕掉膠帶後再回收","紙箱和膠帶都要丟垃圾"),
-                1
-            ),
-            Question(
-                "小李剛買了一些雞蛋，看到雞蛋殼還堆在旁邊。他問小張：「這些雞蛋殼應該丟在哪裡？」",
-                R.drawable.question15,
-                listOf("廚餘桶", "一般垃圾","可回收"),
-                0
-            ),
-            Question(
-                "小李看著剛使用過的保鮮膜，準備丟掉，但他知道這類物品回收比較麻煩，於是問小張：「這個用過的保鮮膜能回收嗎？還是應該丟掉？」",
-                R.drawable.question16,
-                listOf("可以", "需要先清洗","不可以"),
-                2
-            ),
-            Question(
-                "小張拿起了一個用過的鋁箔包，準備回收。小李提醒他：「這個鋁箔包是不是要沖洗乾淨才能回收？」",
-                R.drawable.question17,
-                listOf("剪開沖洗後再回收", "直接丟垃圾桶","可直接回收"),
-                0
-            ),
-            Question(
-                "小李在整理衣櫃時，發現了一些已經不穿的舊衣服。他問小張：「這些舊衣服該怎麼處理才最環保？丟掉嗎，還是有其他辦法？」",
-                R.drawable.question18,
-                listOf("直接丟垃圾桶", "捐給需要的人或二手回收","剪碎當抹布"),
-                1
-            ),
-            Question(
-                "小李看到桌上散落的碎紙屑，問小張：「這些碎紙屑可以回收嗎？」",
-                R.drawable.question19,
-                listOf("不可以", "可以","需要裝袋才行"),
-                0
-            ),
-            Question(
-                "小張換了一支新的牙刷，將舊的牙刷放到一旁，他問小李：「這支用過的牙刷應該怎麼丟？一般垃圾還是有專門的回收處？」",
-                R.drawable.question20,
-                listOf("可回收", "有專門回收點","一般垃圾"),
-                2
-            ),
-            Question(
-                "小王在整理家裡的垃圾時，發現一堆舊物品，他問小李：「下面哪種物品不能回收？我有點搞不清楚。」",
-                R.drawable.question21,
-                listOf("廢電池", "寶特瓶","玻璃罐","油漬紙盒"),
-                3
-            ),
-            Question(
-                "小李正在清理新買的包裝盒，他問小王：「以下哪種材質的包裝盒最難回收？我知道塑膠袋回收麻煩，但其他的包裝盒呢？」",
-                R.drawable.question22,
-                listOf("紙盒", "塑膠袋","鋁箔紙盒","保麗龍"),
-                3
-            ),
-            Question(
-                "小王看到廚房的塑膠瓶，他問小李：「哪種材質的塑膠是可回收的？我聽說有些塑膠不能回收。」",
-                R.drawable.question23,
-                listOf("PET（寶特瓶）","PP（免洗餐具）","PS（保麗龍）","都可以"),
-                0
-            ),
-            Question(
-                "小張家裡有一部舊手機，他不再使用了，問小李：「這部舊手機應該怎麼處理？丟掉還是有其他辦法？」",
-                R.drawable.question24,
-                listOf("丟垃圾桶", "拿去3C回收站","賣給二手回收商","放在家裡當備用"),
-                1
-            ),
-            Question(
-                "小王清理家裡的玻璃瓶，問小李：「這個玻璃瓶該怎麼處理？我記得玻璃可以回收，但需要清洗嗎？」",
-                R.drawable.question25,
-                listOf("直接丟回收桶", "清洗乾淨後回收","敲碎後再回收","跟塑膠瓶一起回收"),
-                1
-            ),
-            Question(
-                "小李把一個鐵製衣架丟到垃圾桶，問小張：「這個鐵製衣架能回收嗎？」",
-                R.drawable.question26,
-                listOf("可以", "不可以"),
-                0
-            ),
-            Question(
-                "小張拿起一堆舊報紙、雜誌和紙箱，問小李：「這些舊報紙、雜誌、紙箱該怎麼分類？我記得有些是可以回收的，但也不確定應該怎麼分類。」",
-                R.drawable.question27,
-                listOf("全部一起回收", "紙箱分開，報紙與雜誌可一起回收","雜誌丟垃圾，報紙和紙箱回收","報紙回收，紙箱與雜誌丟垃圾"),
-                1
-            ),
-            Question(
-                "小李問小張：「回收塑膠時，哪個步驟最重要？是直接丟進回收桶，還是有其他更重要的處理方式？」",
-                R.drawable.question28,
-                listOf("分類不同種類的塑膠","清洗乾淨再回收","全部都重要"),
-                2
-            ),
-            Question(
-                "小李和小張討論鋁罐的回收，他問小王：「回收後的鋁罐可以被製成什麼？聽說它能做成很多東西。」",
-                R.drawable.question29,
-                listOf("新的鋁罐", "衣服","木材","保麗龍"),
-                0
-            ),
-            Question(
-                "小張看著滿桌的垃圾，問小李：「如果想要延長資源的使用壽命，減少浪費，應該怎麼做？」",
-                R.drawable.question30,
-                listOf("多用塑膠袋來裝垃圾", "減少購買一次性用品","只使用可回收的東西","將所有垃圾都回收"),
-                1
-            )
+            Question(R.drawable.question1, listOf("可回收", "一般垃圾"), 1),
+            Question(R.drawable.question2, listOf("可回收", "一般垃圾"), 0),
+            Question(R.drawable.question3, listOf("可回收", "一般垃圾"), 1),
+            Question(R.drawable.question4, listOf("是", "否"), 0),
+            Question(R.drawable.question5, listOf("是", "否"), 0),
+            Question(R.drawable.question6, listOf("是","否"), 1),
+            Question(R.drawable.question7, listOf("可回收", "一般垃圾"), 0),
+            Question(R.drawable.question8, listOf("是","否"), 0),
+            Question(R.drawable.question9, listOf("可回收", "一般垃圾"), 0),
+            Question(R.drawable.question10, listOf("是", "否"), 1),
+            Question(R.drawable.question11, listOf("可回收", "一般垃圾","大型垃圾"), 1),
+            Question(R.drawable.question12, listOf("倒掉液體再分類回收", "直接丟垃圾桶","整杯一起回收"), 0),
+            Question(R.drawable.question13, listOf("直接丟掉","丟入廚餘桶","清洗乾淨後回收"), 2),
+            Question(R.drawable.question14, listOf("可以直接回收", "需要撕掉膠帶後再回收","紙箱和膠帶都要丟垃圾"), 1),
+            Question(R.drawable.question15, listOf("廚餘桶", "一般垃圾","可回收"), 0),
+            Question(R.drawable.question16, listOf("可以", "需要先清洗","不可以"), 2),
+            Question(R.drawable.question17, listOf("剪開沖洗後再回收", "直接丟垃圾桶","可直接回收"), 0),
+            Question(R.drawable.question18, listOf("直接丟垃圾桶", "捐給需要的人或二手回收","剪碎當抹布"), 1),
+            Question(R.drawable.question19, listOf("不可以", "可以","需要裝袋才行"), 0),
+            Question(R.drawable.question20, listOf("可回收", "有專門回收點","一般垃圾"), 2),
+            Question(R.drawable.question21, listOf("廢電池", "寶特瓶","玻璃罐","油漬紙盒"), 3),
+            Question(R.drawable.question22, listOf("紙盒", "塑膠袋","鋁箔紙盒","保麗龍"), 3),
+            Question(R.drawable.question23, listOf("PET（寶特瓶）","PP（免洗餐具）","PS（保麗龍）","都可以"), 0),
+            Question(R.drawable.question24, listOf("丟垃圾桶", "拿去3C回收站","賣給二手回收商","放在家裡當備用"), 1),
+            Question(R.drawable.question25, listOf("直接丟回收桶", "清洗乾淨後回收","敲碎後再回收","跟塑膠瓶一起回收"), 1),
+            Question(R.drawable.question26, listOf("可以", "不可以"), 0),
+            Question(R.drawable.question27, listOf("全部一起回收", "紙箱分開，報紙與雜誌可一起回收","雜誌丟垃圾，報紙和紙箱回收","報紙回收，紙箱與雜誌丟垃圾"), 1),
+            Question(R.drawable.question28, listOf("分類不同種類的塑膠","清洗乾淨再回收","全部都重要"), 2),
+            Question(R.drawable.question29, listOf("新的鋁罐", "衣服","木材","保麗龍"), 0),
+            Question(R.drawable.question30, listOf("多用塑膠袋來裝垃圾", "減少購買一次性用品","只使用可回收的東西","將所有垃圾都回收"), 1)
         )
     }
 
@@ -250,6 +99,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     var showFeedback by remember { mutableStateOf(false) }
     var isCorrect by remember { mutableStateOf(false) }
     var gameOver by remember { mutableStateOf(false) }
+    var showOptions by remember { mutableStateOf(false) }  // 控制是否顯示選項
     val maxQuestions = 5
 
     val maxPlaysPerDay = 3
@@ -299,31 +149,36 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     // 進入下一題
     fun nextQuestion() {
         showFeedback = false
+        showOptions = false  // 重置選項顯示狀態
         getNextRandomQuestion()
     }
 
     // UI建構
     Box(modifier = Modifier.fillMaxSize()) {
         // 背景圖片
-        val backgroundImage = painterResource(id =
-            if (questions[questionIndex].imageResource != null)
-                questions[questionIndex].imageResource!!
-            else
-                R.drawable.greenback)
+        val backgroundImage = painterResource(id = questions[questionIndex].imageResource)
 
         Image(
             painter = backgroundImage,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    enabled = !showOptions && !showFeedback && !gameOver && canPlay,
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) {
+                    showOptions = true  // 點擊圖片後顯示選項
+                }
         )
 
         // 返回按鈕
         val backButtonImage = painterResource(id = R.drawable.backarrow)
         Box(
             modifier = Modifier
-                .padding(16.dp)
-                .size(40.dp)
+                .padding(8.dp)
+                .size(30.dp)
                 .clickable { navController.popBackStack() }
                 .align(Alignment.TopStart)
         ) {
@@ -335,16 +190,16 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
 
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(6.dp)
                 .align(Alignment.TopEnd)
-                .background(Color(0x88000000), shape = RoundedCornerShape(8.dp))
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .background(Color(0x55000000), shape = RoundedCornerShape(4.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "分數: $score",
-                fontSize = 16.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -352,13 +207,13 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
             Box(
                 modifier = Modifier
                     .width(1.dp)
-                    .height(20.dp)
+                    .height(10.dp)
                     .background(Color.White.copy(alpha = 0.5f))
             )
 
             Text(
-                text = "今日剩餘: $remainingPlays 次",
-                fontSize = 16.sp,
+                text = "剩餘: $remainingPlays 次",
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -415,31 +270,12 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
             )
         }
 
-        // 題目顯示
-        if (!gameOver && canPlay) {
+        // 題目顯示 - 答案選項（點擊畫面後才顯示）
+        if (!gameOver && canPlay && showOptions) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.Bottom
             ) {
-                // 題目文字區域
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 80.dp)
-                        .background(Color(0x88000000), shape = RoundedCornerShape(16.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = questions[questionIndex].questionText,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // 答案選項
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -574,7 +410,7 @@ fun AnswerButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
             .width(280.dp)
             .height(60.dp)
             .background(
-                color = if (enabled) Color(0xFFB8E6C0) else Color(0xFFAAAAAA),
+                color = if (enabled) Color(0xFFADFEDC) else Color(0xFFAAAAAA),
                 shape = RoundedCornerShape(30.dp)
             )
             .clickable(enabled = enabled) { onClick() },
