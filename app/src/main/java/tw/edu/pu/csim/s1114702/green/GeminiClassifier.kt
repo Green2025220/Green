@@ -27,7 +27,7 @@ class GeminiClassifier(private val apiKey: String) {
         .build()
 
     suspend fun classifyGarbage(itemName: String, chineseName: String): GeminiClassificationResult {
-        /*
+
         // ===== 測試模式（已停用，保留以備將來使用） =====
         if (USE_MOCK_MODE) {
             Log.d("GeminiClassifier", "🔧 使用模擬模式: $itemName")
@@ -67,60 +67,28 @@ class GeminiClassifier(private val apiKey: String) {
                 else -> GeminiClassificationResult("其他", "未知物品", false)
             }
         }
-         */
+        // ===== 以上為測試模式（已停用，保留以備將來使用） =====
 
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("GeminiClassifier", "🔄 開始 REST API 呼叫: $chineseName ($itemName)")
 
                 val prompt = """
-你是一個台灣垃圾分類專家。請根據台灣的垃圾分類規則，判斷以下物品的分類。
+你是一個台灣垃圾分類專家。請判斷物品的分類。
+物品: $chineseName
 
-偵測到的物品：$chineseName ($itemName)
+分類規則:
+- 電子產品/小家電/紙類→回收
+- 食物→廚餘
+- 玩具/日用品→一般垃圾
+- 人/動物/交通工具/大型家具→其他(非垃圾)
 
-請嚴格按照以下 JSON 格式回答，不要包含任何其他文字或 Markdown 標記：
-{
-  "category": "回收/一般垃圾/廚餘/其他",
-  "reason": "簡短理由(10字內)",
-  "isGarbage": true/false
-}
-
-台灣垃圾分類規則：
-
-【回收類】(isGarbage=true)
-- 塑膠類：塑膠瓶、塑膠杯、塑膠袋（乾淨）
-- 紙類：紙箱、書本、報紙（乾淨無污染）
-- 金屬：鋁罐、鐵罐、金屬餐具
-- 玻璃：玻璃瓶、玻璃杯
-- 電子產品：手機、電腦、滑鼠、鍵盤、遙控器、電視、筆電
-- 家電：吹風機、烤箱、微波爐、冰箱
-- 其他：腳踏車、雨傘（需拆解）
-
-【一般垃圾類】(isGarbage=true)
-- 受污染無法回收的物品：油膩的紙盒、髒塑膠袋
-- 玩具：泰迪熊、球類
-- 日用品：牙刷、時鐘
-- 布料：背包、手提包、行李箱、領帶
-
-【廚餘類】(isGarbage=true)
-- 所有食物：水果、蔬菜、熟食、零食、蛋糕
-
-【其他類】(isGarbage=false，這些不是垃圾)
-- 人、動物
-- 交通工具：汽車、公車、火車、飛機
-- 大型家具：床、沙發、餐桌（這些需要特殊處理，不是一般垃圾分類範圍）
-- 建築物、紅綠燈、消防栓等公共設施
-
-重要規則：
-1. 電子產品一律分類為「回收」
-2. 小家電一律分類為「回收」
-3. 人、動物、交通工具 → category="其他", isGarbage=false
-4. 大型家具（床、沙發、餐桌）→ category="其他", isGarbage=false
-5. 如果不確定，優先考慮是否為電子產品或小家電
+JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字內","isGarbage":true/false}
+不要額外文字。
 """.trimIndent()
 
                 // 使用 v1 API（穩定版本）
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=$apiKey"
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
 
                 val requestBody = JSONObject().apply {
                     put("contents", org.json.JSONArray().apply {
@@ -171,15 +139,30 @@ class GeminiClassifier(private val apiKey: String) {
 
                 Log.d("GeminiClassifier", "✅ API 回應成功")
 
-                // 解析回應
-                val jsonResponse = JSONObject(responseBody)
-                val candidates = jsonResponse.getJSONArray("candidates")
-                val content = candidates.getJSONObject(0)
-                    .getJSONObject("content")
-                val parts = content.getJSONArray("parts")
-                val text = parts.getJSONObject(0).getString("text").trim()
+                Log.d("GeminiClassifier", "📥 完整回應: $responseBody")
 
-                Log.d("GeminiClassifier", "📝 回應內容: $text")
+                // ✅ 改進的回應解析
+                val jsonResponse = JSONObject(responseBody)
+
+                val text = try {
+                    // 標準格式
+                    val candidates = jsonResponse.getJSONArray("candidates")
+                    val content = candidates.getJSONObject(0).getJSONObject("content")
+                    val parts = content.getJSONArray("parts")
+                    parts.getJSONObject(0).getString("text").trim()
+                } catch (e: Exception) {
+                    // 備用格式：有些模型直接返回 text
+                    try {
+                        val candidates = jsonResponse.getJSONArray("candidates")
+                        candidates.getJSONObject(0).getString("text").trim()
+                    } catch (e2: Exception) {
+                        Log.e("GeminiClassifier", "無法解析回應", e2)
+                        // 如果實在無法解析，返回整個 responseBody
+                        responseBody
+                    }
+                }
+
+                Log.d("GeminiClassifier", "📝 提取的文字: $text")
 
                 val result = parseGeminiResponse(text)
                 Log.d("GeminiClassifier", "📊 分類結果: ${result.category} - ${result.reason}")

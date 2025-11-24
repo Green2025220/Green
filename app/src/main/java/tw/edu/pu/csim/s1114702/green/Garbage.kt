@@ -253,6 +253,9 @@ fun GarbageScreen(navController: NavController,
     var lastDetectedLabel by remember { mutableStateOf("") }
     var consecutiveCount by remember { mutableStateOf(0) }
 
+    var lastApiCallTime by remember { mutableStateOf(0L) }
+    val minApiInterval = 2000L  // 至少間隔 2 秒
+
     //新增：獎勵相關狀態
     var showRewardDialog by remember { mutableStateOf(false) }
     var remainingRewards by remember { mutableStateOf(3) }
@@ -414,6 +417,13 @@ fun GarbageScreen(navController: NavController,
                                                                     if (label == lastDetectedLabel) {
                                                                         consecutiveCount++
                                                                         if (consecutiveCount >= 5 && label != lastAnalyzedLabel && !isAIAnalyzing) {
+                                                                            val currentTime = System.currentTimeMillis()
+                                                                            if (currentTime - lastApiCallTime < minApiInterval) {
+                                                                                Log.d("GarbageScreen", "⏱️ API 請求太頻繁，跳過")
+                                                                                return@setAnalyzer  // 跳過這次請求
+                                                                            }
+
+                                                                            lastApiCallTime = currentTime
                                                                             // ===== 觸發 Gemini AI 分析 =====
                                                                             lastAnalyzedLabel = label
                                                                             val chineseLabel = translateToChineseItem(label)
@@ -428,7 +438,52 @@ fun GarbageScreen(navController: NavController,
                                                                                     val aiResult = geminiClassifier.classifyGarbage(label, chineseLabel)
 
                                                                                     withContext(Dispatchers.Main) {
-                                                                                        if (aiResult.isGarbage) {
+                                                                                        // ✅ 檢查是否為 API 錯誤（配額用完、連線失敗等）
+                                                                                        if (aiResult.category == "其他" &&
+                                                                                            (aiResult.reason == "配額用完" ||
+                                                                                             aiResult.reason == "API 錯誤" ||
+                                                                                             aiResult.reason == "連線失敗" ||
+                                                                                             aiResult.reason == "解析失敗")) {
+                                                                                            // 降級使用靜態分類
+                                                                                            detectedItem = chineseLabel
+                                                                                            category = classifyItem(label)  // 使用原本的靜態分類
+                                                                                            aiReason = "AI 暫時無法使用 (${aiResult.reason})"
+                                                                                            confidence = score
+
+                                                                                            Log.w("GarbageScreen", "⚠️ AI 失敗，降級使用靜態分類: ${aiResult.reason}")
+
+                                                                                            // 即使降級，仍可獲得獎勵（如果是垃圾）
+                                                                                            if (score >= 0.5f &&
+                                                                                                category != "其他" &&
+                                                                                                userEmail.isNotEmpty()) {
+                                                                                                val currentTime = System.currentTimeMillis()
+                                                                                                val timeSinceLastReward = currentTime - lastRewardTime
+
+                                                                                                if (timeSinceLastReward >= cooldownDuration) {
+                                                                                                    val rewarded = viewModel.rewardGarbageClassification(userEmail)
+
+                                                                                                    if (rewarded) {
+                                                                                                        lastRewardedCategory = category
+                                                                                                        remainingRewards = viewModel.getRemainingGarbageRewards()
+                                                                                                        showRewardDialog = true
+                                                                                                        lastRewardTime = currentTime
+
+                                                                                                        Log.d("GarbageScreen", "獲得獎勵！分類(靜態): $category, 信心度: ${score * 100}%")
+
+                                                                                                        // 重置計數
+                                                                                                        consecutiveCount = 0
+                                                                                                        lastDetectedLabel = ""
+                                                                                                        lastAnalyzedLabel = ""
+                                                                                                    } else {
+                                                                                                        Log.d("GarbageScreen", "今日已達上限")
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    val remainingCooldown = (cooldownDuration - timeSinceLastReward) / 1000
+                                                                                                    Log.d("GarbageScreen", "冷卻中，剩餘 $remainingCooldown 秒")
+                                                                                                }
+                                                                                            }
+
+                                                                                        } else if (aiResult.isGarbage) {
                                                                                             // 是垃圾，使用 AI 分類結果
                                                                                             detectedItem = chineseLabel
                                                                                             category = aiResult.category
@@ -468,7 +523,7 @@ fun GarbageScreen(navController: NavController,
                                                                                                 }
                                                                                             }
                                                                                         } else {
-                                                                                            // 不是垃圾
+                                                                                            // 不是垃圾（人、動物、交通工具等）
                                                                                             detectedItem = chineseLabel
                                                                                             category = "非垃圾物品"
                                                                                             aiReason = aiResult.reason
