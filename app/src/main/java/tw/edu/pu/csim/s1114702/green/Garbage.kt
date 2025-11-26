@@ -299,8 +299,12 @@ fun GarbageScreen(navController: NavController,
     val objectDetector by remember {
         mutableStateOf(
             try {
-                ObjectDetector.createFromFile(localContext, "efficientdet_lite0.tflite")
+                Log.d("GarbageScreen", "開始載入模型: efficientdet_lite1.tflite")
+                val detector = ObjectDetector.createFromFile(localContext, "efficientdet_lite1.tflite")
+                Log.d("GarbageScreen", "✅ 模型載入成功")
+                detector
             } catch (e: Exception) {
+                Log.e("GarbageScreen", "❌ 模型載入失敗", e)
                 e.printStackTrace()
                 null
             }
@@ -405,8 +409,39 @@ fun GarbageScreen(navController: NavController,
                                                         val tensorImage = TensorImage.fromBitmap(bitmap)
                                                         val results: List<Detection> = detector.detect(tensorImage)
 
+                                                        // 過濾動物和人
+                                                        val excludedCategories = setOf(
+                                                            "person", "sheep", "zebra", "horse", "giraffe",
+                                                            "elephant", "dog", "cow", "cat", "bird", "bear"
+                                                        )
+
                                                         if (results.isNotEmpty()) {
-                                                            val detection = results[0]
+                                                            val topDetection = results[0]
+                                                            val topLabel = topDetection.categories.firstOrNull()?.label
+                                                            val topScore = topDetection.categories.firstOrNull()?.score ?: 0f
+
+                                                            // 如果第一名是動物且信心度夠高，顯示友善提示
+                                                            if (excludedCategories.contains(topLabel) && topScore >= 0.5f) {
+                                                                consecutiveCount = 0
+                                                                lastDetectedLabel = ""
+                                                                lastAnalyzedLabel = ""
+                                                                detectedItem = translateToChineseItem(topLabel ?: "")
+                                                                category = "這不是垃圾物品"
+                                                                confidence = topScore
+                                                                aiReason = "請對準可分類的垃圾"
+                                                                imageProxy.close()
+                                                                return@setAnalyzer
+                                                            }
+                                                        }
+                                                        // ✅ 過濾動物，且要求信心度 >= 40%
+                                                        val filteredResults = results.filter { detection ->
+                                                            val label = detection.categories.firstOrNull()?.label
+                                                            val score = detection.categories.firstOrNull()?.score ?: 0f
+                                                            !excludedCategories.contains(label) && score >= 0.4f
+                                                        }
+
+                                                        if (filteredResults.isNotEmpty()) {
+                                                            val detection = filteredResults[0]
                                                             if (detection.categories.isNotEmpty()) {
                                                                 val category_info = detection.categories[0]
                                                                 val label = category_info.label
@@ -574,7 +609,7 @@ fun GarbageScreen(navController: NavController,
                                                             consecutiveCount = 0
                                                             lastDetectedLabel = ""
                                                             lastAnalyzedLabel = ""
-                                                            detectedItem = "請對準物件"
+                                                            detectedItem = "請對準垃圾物品"
                                                             category = "等待中..."
                                                             confidence = 0f
                                                             aiReason = ""

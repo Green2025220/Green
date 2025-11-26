@@ -28,7 +28,7 @@ class GeminiClassifier(private val apiKey: String) {
 
     suspend fun classifyGarbage(itemName: String, chineseName: String): GeminiClassificationResult {
 
-        // ===== 測試模式（已停用，保留以備將來使用） =====
+        // ===== 測試模式（private val USE_MOCK_MODE = false已停用，保留以備將來使用） =====
         if (USE_MOCK_MODE) {
             Log.d("GeminiClassifier", "🔧 使用模擬模式: $itemName")
             kotlinx.coroutines.delay(800)
