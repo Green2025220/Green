@@ -1,6 +1,5 @@
 package tw.edu.pu.csim.s1114702.green
 
-
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
@@ -29,7 +28,6 @@ import androidx.navigation.NavController
 import com.google.android.gms.location.*
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun CarScreen(
     navController: NavController,
@@ -39,8 +37,10 @@ fun CarScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // 初始化 AI 助手
-    val carbonAI = remember { CarbonAIAdvisor(BuildConfig.GEMINI_API_KEY) }
+    // 初始化 AI 助手 - 使用 BuildConfig
+    val carbonAI = remember {
+        CarbonAIAdvisor(BuildConfig.GEMINI_API_KEY)
+    }
 
     var totalCarbonEmission by remember { mutableStateOf(0.0) }
     var currentSpeed by remember { mutableStateOf(0f) }
@@ -127,6 +127,33 @@ fun CarScreen(
         totalCarbonEmission = totalDistance * fuelEfficiency * carbonPerLiter
     }
 
+    // AI 分析函數
+    fun analyzeWithAI() {
+        scope.launch {
+            isAIAnalyzing = true
+            try {
+                Log.d("CarScreen", "開始 AI 分析...")
+                Log.d("CarScreen", "碳排放: $totalCarbonEmission kg, 距離: $totalDistance km")
+
+                val analysis = carbonAI.analyzeCarbonImpact(
+                    carbonAmount = totalCarbonEmission,
+                    transportType = "汽車",
+                    distance = totalDistance
+                )
+
+                aiAnalysis = analysis
+                showAIDialog = true
+
+                Log.d("CarScreen", "AI 分析完成: ${analysis.environmentalImpact}")
+            } catch (e: Exception) {
+                Log.e("CarScreen", "AI 分析失敗", e)
+                // 可以在這裡顯示錯誤訊息
+            } finally {
+                isAIAnalyzing = false
+            }
+        }
+    }
+
     // 顏色根據嚴重程度
     val severityColor = when (aiAnalysis?.severity) {
         "低" -> Color(0xFF4CAF50)
@@ -134,6 +161,8 @@ fun CarScreen(
         "高" -> Color(0xFFF44336)
         else -> Color.Gray
     }
+
+    // ========== 對話框 ==========
 
     if (showPermissionDialog) {
         AlertDialog(
@@ -163,15 +192,24 @@ fun CarScreen(
                         color = Color.Gray
                     )
                     Text(
-                        "明天再來記錄吧！",
-                        fontSize = 12.sp,
+                        "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
+                        fontSize = 14.sp,
                         color = Color.Gray
                     )
                 }
             },
             confirmButton = {
-                Button(onClick = { showRewardDialog = false }) {
-                    Text("太好了！")
+                Button(onClick = {
+                    showRewardDialog = false
+                    // 自動觸發 AI 分析
+                    analyzeWithAI()
+                }) {
+                    Text("查看 AI 分析")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRewardDialog = false }) {
+                    Text("稍後")
                 }
             }
         )
@@ -191,15 +229,23 @@ fun CarScreen(
                         color = Color.Gray
                     )
                     Text(
-                        "明天再來繼續記錄碳排放吧！",
-                        fontSize = 12.sp,
+                        "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
+                        fontSize = 14.sp,
                         color = Color.Gray
                     )
                 }
             },
             confirmButton = {
-                Button(onClick = { showAlreadyRewardedDialog = false }) {
-                    Text("知道了")
+                Button(onClick = {
+                    showAlreadyRewardedDialog = false
+                    analyzeWithAI()
+                }) {
+                    Text("查看 AI 分析")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAlreadyRewardedDialog = false }) {
+                    Text("稍後")
                 }
             }
         )
@@ -208,7 +254,7 @@ fun CarScreen(
     if (showInsufficientDistanceDialog) {
         AlertDialog(
             onDismissRequest = { showInsufficientDistanceDialog = false },
-            title = { Text("🎉 完成碳排放記錄！") },
+            title = { Text("記錄完成") },
             text = {
                 Column {
                     Text("至少需要行駛 0.5 公里才能獲得分數")
@@ -223,12 +269,6 @@ fun CarScreen(
                         fontSize = 14.sp,
                         color = Color.Gray
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "再接再厲！",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
                 }
             },
             confirmButton = {
@@ -239,6 +279,7 @@ fun CarScreen(
         )
     }
 
+    // AI 分析結果對話框
     if (showAIDialog && aiAnalysis != null) {
         AlertDialog(
             onDismissRequest = { showAIDialog = false },
@@ -266,6 +307,35 @@ fun CarScreen(
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
                 ) {
+                    // 基本資訊
+                    Surface(
+                        color = Color(0xFFF5F5F5),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                "📊 本次數據",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2CA673)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
+                                fontSize = 13.sp,
+                                color = Color.DarkGray
+                            )
+                            Text(
+                                "行駛距離: ${String.format("%.2f", totalDistance)} 公里",
+                                fontSize = 13.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
                         "🌍 對環境的影響",
                         fontSize = 16.sp,
@@ -348,6 +418,8 @@ fun CarScreen(
         )
     }
 
+    // ========== 主畫面 ==========
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.road2),
@@ -363,6 +435,7 @@ fun CarScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 標題列
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -397,6 +470,7 @@ fun CarScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // 今日狀態
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -417,8 +491,10 @@ fun CarScreen(
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // 數據卡片
                 Card(
                     modifier = Modifier.fillMaxWidth(0.9f),
                     elevation = CardDefaults.cardElevation(4.dp)
@@ -447,12 +523,15 @@ fun CarScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // 開始/停止按鈕
                 Button(
                     onClick = {
                         if (isCalculating) {
                             isCalculating = false
                             calculateCarbonEmission()
                             hasCalculated = true
+
+                            Log.d("CarScreen", "停止計算 - 距離: $totalDistance km, 碳排放: $totalCarbonEmission kg")
 
                             if (totalDistance < 0.5) {
                                 showInsufficientDistanceDialog = true
@@ -466,6 +545,7 @@ fun CarScreen(
                                 }
                             }
                         } else {
+                            Log.d("CarScreen", "開始計算")
                             isCalculating = true
                             hasCalculated = false
                             totalDistance = 0.0
@@ -474,31 +554,26 @@ fun CarScreen(
                             aiAnalysis = null
                         }
                     },
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2CA673))
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2CA673)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(if (isCalculating) "停止計算" else "開始計算", color = Color.White)
+                    Text(
+                        if (isCalculating) "停止計算" else "開始計算",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
+                // AI 分析按鈕（停止計算後才顯示）
                 if (hasCalculated && totalCarbonEmission > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Button(
-                        onClick = {
-                            scope.launch {
-                                isAIAnalyzing = true
-                                try {
-                                    aiAnalysis = carbonAI.analyzeCarbonImpact(
-                                        carbonAmount = totalCarbonEmission,
-                                        transportType = "汽車",
-                                        distance = totalDistance
-                                    )
-                                    showAIDialog = true
-                                } catch (e: Exception) {
-                                    Log.e("CarScreen", "AI 分析失敗", e)
-                                } finally {
-                                    isAIAnalyzing = false
-                                }
-                            }
-                        },
+                        onClick = { analyzeWithAI() },
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
                             .height(56.dp),
@@ -522,6 +597,7 @@ fun CarScreen(
                         }
                     }
 
+                    // AI 分析預覽卡片
                     aiAnalysis?.let { analysis ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Card(
@@ -574,6 +650,7 @@ fun CarScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // 汽車圖片
             Image(
                 painter = painterResource(id = R.drawable.car2),
                 contentDescription = "Car",
