@@ -579,8 +579,9 @@ fun MotorScreen(navController: NavController,
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(56.dp),
+                        .wrapContentWidth()
+                        .height(56.dp)
+                        .padding(horizontal = 32.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2CA673)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -599,8 +600,9 @@ fun MotorScreen(navController: NavController,
                     Button(
                         onClick = { analyzeWithAI() },
                         modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .height(56.dp),
+                            .wrapContentWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 32.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2196F3),
                             contentColor = Color.White
@@ -671,7 +673,7 @@ fun MotorScreen(navController: NavController,
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(8.dp))
 
             }
 
