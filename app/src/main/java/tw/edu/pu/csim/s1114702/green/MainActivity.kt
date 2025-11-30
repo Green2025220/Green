@@ -1,5 +1,6 @@
 package tw.edu.pu.csim.s1114702.green
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -32,17 +33,36 @@ import tw.edu.pu.csim.s1114702.green.ui.theme.GreenTheme
 import java.security.MessageDigest
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var mediaPlayer: MediaPlayer     // background music player
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Firebase 初始化
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
         }
+
+        // 🎵 啟動背景音樂
+        mediaPlayer = MediaPlayer.create(this, R.raw.bgmusic)
+        mediaPlayer.isLooping = true
+        mediaPlayer.setVolume(1.0f, 1.0f)
+        mediaPlayer.start()
 
         setContent {
             GreenTheme {
                 AppNavigation()
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // 釋放 MediaPlayer
+        if (this::mediaPlayer.isInitialized) {
+            mediaPlayer.release()
         }
     }
 }

@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tw.edu.pu.csim.s1114702.green.BuildConfig
 
+
 // ====== 垃圾分類表 ======
 val recycleItems = setOf(
     "bottle", "wine glass", "cup", "book", "bicycle",
