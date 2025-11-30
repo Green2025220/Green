@@ -69,8 +69,8 @@ fun CarScreen(
     }
 
     // 檢查今天是否可以獲得獎勵
-    LaunchedEffect(viewModel.lastCarbonCalculatorDate) {
-        canGetReward = viewModel.canGetCarbonCalculatorReward()
+    LaunchedEffect(viewModel.lastCarCalculatorDate) {
+        canGetReward = viewModel.canGetCarCalculatorReward()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -536,7 +536,7 @@ fun CarScreen(
                             if (totalDistance < 0.5) {
                                 showInsufficientDistanceDialog = true
                             } else if (userEmail.isNotEmpty()) {
-                                val rewarded = viewModel.rewardCarbonCalculator(userEmail)
+                                val rewarded = viewModel.rewardCarCalculator(userEmail)
                                 if (rewarded) {
                                     showRewardDialog = true
                                     canGetReward = false

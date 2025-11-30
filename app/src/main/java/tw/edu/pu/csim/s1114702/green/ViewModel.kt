@@ -142,7 +142,9 @@ class ViewModel : ViewModel() {
                     val positions = document["itemPositions"] as? Map<String, Map<String, Float>> ?: mapOf()
 
                     // 載入碳排放計算器日期
-                    lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
+                    lastCarCalculatorDate = document.getString("lastCarCalculatorDate") ?: ""
+                    lastMotorCalculatorDate = document.getString("lastMotorCalculatorDate") ?: ""
+                    lastBusCalculatorDate = document.getString("lastBusCalculatorDate") ?: ""
 
                     //載入一拍即分數據
                     lastGarbageDate = document.getString("lastGarbageDate") ?: ""
@@ -317,39 +319,159 @@ class ViewModel : ViewModel() {
 
 
     // 在 ViewModel 類別中加入
-    private val _lastCarbonCalculatorDate = mutableStateOf("")
-    var lastCarbonCalculatorDate: String
-        get() = _lastCarbonCalculatorDate.value
-        set(value) { _lastCarbonCalculatorDate.value = value }
+    private val _lastCarCalculatorDate = mutableStateOf("")
+    var lastCarCalculatorDate: String
+        get() = _lastCarCalculatorDate.value
+        set(value) { _lastCarCalculatorDate.value = value }
 
+    private val _lastMotorCalculatorDate = mutableStateOf("")
+    var lastMotorCalculatorDate: String
+        get() = _lastMotorCalculatorDate.value
+        set(value) { _lastMotorCalculatorDate.value = value }
+
+    private val _lastBusCalculatorDate = mutableStateOf("")
+    var lastBusCalculatorDate: String
+        get() = _lastBusCalculatorDate.value
+        set(value) { _lastBusCalculatorDate.value = value }
     /**
-     * 檢查今天是否可以從碳排放計算器獲得分數
-     * @return true 表示可以獲得分數，false 表示今天已經獲得過了
+     * 檢查今天是否可以從汽車計算器獲得分數
      */
-    fun canGetCarbonCalculatorReward(): Boolean {
+    fun canGetCarCalculatorReward(): Boolean {
         val today = LocalDate.now().toString()
-        return lastCarbonCalculatorDate != today
+        return lastCarCalculatorDate != today
     }
 
     /**
-     * 碳排放計算器獎勵 - 每天第一次使用可獲得 5 分
-     * @param email 使用者 email
-     * @return true 表示成功獲得分數，false 表示今天已經獲得過
+     * 檢查今天是否可以從機車計算器獲得分數
      */
-    fun rewardCarbonCalculator(email: String): Boolean {
-        if (canGetCarbonCalculatorReward()) {
+    fun canGetMotorCalculatorReward(): Boolean {
+        val today = LocalDate.now().toString()
+        return lastMotorCalculatorDate != today
+    }
+
+    /**
+     * 檢查今天是否可以從公車計算器獲得分數
+     */
+    fun canGetBusCalculatorReward(): Boolean {
+        val today = LocalDate.now().toString()
+        return lastBusCalculatorDate != today
+    }
+
+    /**
+     * 汽車計算器獎勵 - 每天第一次使用可獲得 5 分
+     */
+    fun rewardCarCalculator(email: String): Boolean {
+        if (canGetCarCalculatorReward()) {
             val today = LocalDate.now().toString()
-            lastCarbonCalculatorDate = today
+            lastCarCalculatorDate = today
             totalScore += 5
 
             // 儲存到 Firebase
-            saveCarbonCalculatorDateToFirebase(email, today)
+            saveCarCalculatorDateToFirebase(email, today)
 
-            Log.d("ViewModel", "碳排放計算器獎勵：獲得 5 分，當前總分: $totalScore")
+            Log.d("ViewModel", "汽車計算器獎勵：獲得 5 分，當前總分: $totalScore")
             return true
         }
-        Log.d("ViewModel", "碳排放計算器獎勵：今天已經獲得過了")
+        Log.d("ViewModel", "汽車計算器獎勵：今天已經獲得過了")
         return false
+    }
+
+    /**
+     * 機車計算器獎勵 - 每天第一次使用可獲得 3 分
+     */
+    fun rewardMotorCalculator(email: String): Boolean {
+        if (canGetMotorCalculatorReward()) {
+            val today = LocalDate.now().toString()
+            lastMotorCalculatorDate = today
+            totalScore += 3
+
+            // 儲存到 Firebase
+            saveMotorCalculatorDateToFirebase(email, today)
+
+            Log.d("ViewModel", "機車計算器獎勵：獲得 3 分，當前總分: $totalScore")
+            return true
+        }
+        Log.d("ViewModel", "機車計算器獎勵：今天已經獲得過了")
+        return false
+    }
+
+    /**
+     * 公車計算器獎勵 - 每天第一次使用可獲得 10 分
+     */
+    fun rewardBusCalculator(email: String): Boolean {
+        if (canGetBusCalculatorReward()) {
+            val today = LocalDate.now().toString()
+            lastBusCalculatorDate = today
+            totalScore += 10
+
+            // 儲存到 Firebase
+            saveBusCalculatorDateToFirebase(email, today)
+
+            Log.d("ViewModel", "公車計算器獎勵：獲得 10 分，當前總分: $totalScore")
+            return true
+        }
+        Log.d("ViewModel", "公車計算器獎勵：今天已經獲得過了")
+        return false
+    }
+
+    /**
+     * 儲存汽車計算器最後使用日期到 Firebase
+     */
+    private fun saveCarCalculatorDateToFirebase(email: String, date: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastCarCalculatorDate" to date,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "汽車計算器日期儲存成功: $date")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "汽車計算器日期儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 儲存機車計算器最後使用日期到 Firebase
+     */
+    private fun saveMotorCalculatorDateToFirebase(email: String, date: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastMotorCalculatorDate" to date,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "機車計算器日期儲存成功: $date")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "機車計算器日期儲存失敗: ${e.message}")
+            }
+    }
+
+    /**
+     * 儲存公車計算器最後使用日期到 Firebase
+     */
+    private fun saveBusCalculatorDateToFirebase(email: String, date: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(email)
+            .update(
+                mapOf(
+                    "lastBusCalculatorDate" to date,
+                    "score" to totalScore
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("ViewModel", "公車計算器日期儲存成功: $date")
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "公車計算器日期儲存失敗: ${e.message}")
+            }
     }
 
     /**
@@ -368,15 +490,21 @@ class ViewModel : ViewModel() {
     }
 
     /**
-     * 從 Firebase 載入碳排放計算器最後使用日期
+     * 從 Firebase 載入所有碳排放計算器的最後使用日期
      */
     fun loadCarbonCalculatorDateFromFirebase(email: String) {
         val db = FirebaseFirestore.getInstance()
         db.collection("users").document(email).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    lastCarbonCalculatorDate = document.getString("lastCarbonCalculatorDate") ?: ""
-                    Log.d("ViewModel", "載入碳排放計算器日期: $lastCarbonCalculatorDate")
+                    lastCarCalculatorDate = document.getString("lastCarCalculatorDate") ?: ""
+                    lastMotorCalculatorDate = document.getString("lastMotorCalculatorDate") ?: ""
+                    lastBusCalculatorDate = document.getString("lastBusCalculatorDate") ?: ""
+
+                    Log.d("ViewModel", "載入碳排放計算器日期:")
+                    Log.d("ViewModel", "  汽車: $lastCarCalculatorDate")
+                    Log.d("ViewModel", "  機車: $lastMotorCalculatorDate")
+                    Log.d("ViewModel", "  公車: $lastBusCalculatorDate")
                 }
             }
             .addOnFailureListener { e ->

@@ -18,15 +18,7 @@ data class CarbonAIAnalysis(
 
 class CarbonAIAdvisor(private val apiKey: String) {
 
-    // 嘗試多個可能的模型名稱
-    private val modelCandidates = listOf(
-        "gemini-2.0-flash",           // 與 GeminiClassifier.kt 相同
-        "gemini-2.0-flash-exp",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
-    )
-
-    private var workingModel: String? = null
+    private val modelName = "gemini-2.0-flash"
 
     suspend fun analyzeCarbonImpact(
         carbonAmount: Double,
@@ -35,40 +27,13 @@ class CarbonAIAdvisor(private val apiKey: String) {
     ): CarbonAIAnalysis {
         return withContext(Dispatchers.IO) {
             try {
-                // 如果還沒找到可用的模型,先測試
-                if (workingModel == null) {
-                    workingModel = findWorkingModel()
-                }
-
-                if (workingModel == null) {
-                    Log.e("CarbonAIAdvisor", "找不到可用的模型")
-                    return@withContext getFallbackAnalysis(carbonAmount, transportType)
-                }
-
                 val prompt = buildPrompt(carbonAmount, transportType, distance)
-                val response = callGeminiAPI(prompt, workingModel!!)
+                val response = callGeminiAPI(prompt, modelName)
                 parseAIResponse(response)
             } catch (e: Exception) {
                 Log.e("CarbonAIAdvisor", "AI 分析失敗", e)
                 getFallbackAnalysis(carbonAmount, transportType)
             }
-        }
-    }
-
-    private suspend fun findWorkingModel(): String? {
-        return withContext(Dispatchers.IO) {
-            for (model in modelCandidates) {
-                try {
-                    Log.d("CarbonAIAdvisor", "測試模型: $model")
-                    val testPrompt = "test"
-                    callGeminiAPI(testPrompt, model)
-                    Log.i("CarbonAIAdvisor", "找到可用模型: $model")
-                    return@withContext model
-                } catch (e: Exception) {
-                    Log.d("CarbonAIAdvisor", "模型 $model 不可用: ${e.message}")
-                }
-            }
-            null
         }
     }
 
