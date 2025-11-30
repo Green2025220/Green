@@ -31,7 +31,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun BusScreen(navController: NavController,
               viewModel: ViewModel,
               userEmail: String
-              ) {
+) {
     val context = LocalContext.current
 
     var totalCarbonEmission by remember { mutableStateOf(0.0) }
@@ -44,6 +44,7 @@ fun BusScreen(navController: NavController,
     // 獎勵相關狀態
     var showRewardDialog by remember { mutableStateOf(false) }
     var showAlreadyRewardedDialog by remember { mutableStateOf(false) }
+    var showInsufficientDistanceDialog by remember { mutableStateOf(false) }
     var canGetReward by remember { mutableStateOf(true) }
 
     // 載入上次使用日期
@@ -138,7 +139,7 @@ fun BusScreen(navController: NavController,
             text = {
                 Column {
                     Text("完成碳排放記錄！")
-                    Text("獲得 5 分")
+                    Text("獲得 10 分")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
@@ -183,6 +184,41 @@ fun BusScreen(navController: NavController,
             },
             confirmButton = {
                 Button(onClick = { showAlreadyRewardedDialog = false }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
+
+    // 距離不足對話框
+    if (showInsufficientDistanceDialog) {
+        AlertDialog(
+            onDismissRequest = { showInsufficientDistanceDialog = false },
+            title = { Text("🎉 完成碳排放記錄") },
+            text = {
+                Column {
+                    Text("至少需要行駛 0.5 公里才能獲得分數")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "本次行駛: ${String.format("%.2f", totalDistance)} 公里",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "再接再厲！",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showInsufficientDistanceDialog = false }) {
                     Text("知道了")
                 }
             }
@@ -255,7 +291,7 @@ fun BusScreen(navController: NavController,
                 ) {
                     if (canGetReward) {
                         Text(
-                            "💚 今日尚未記錄 (可獲得 5 分)",
+                            "💚 今日尚未記錄 (可獲得 10 分)",
                             color = Color(0xFF2CA673),
                             fontSize = 14.sp
                         )
@@ -308,14 +344,18 @@ fun BusScreen(navController: NavController,
                             calculateCarbonEmission()
 
                             Log.d("BusScreen", "=== 停止計算 ===")
-                            Log.d("BusScreen", "userEmail: '$userEmail'")  // 👈 加上引號看是否為空
+                            Log.d("BusScreen", "userEmail: '$userEmail'")
                             Log.d("BusScreen", "userEmail.isNotEmpty(): ${userEmail.isNotEmpty()}")
                             Log.d("BusScreen", "停止前分數: ${viewModel.totalScore}")
+                            Log.d("BusScreen", "行駛距離: $totalDistance km")
                             Log.d("BusScreen", "lastCarbonCalculatorDate: ${viewModel.lastCarbonCalculatorDate}")
                             Log.d("BusScreen", "canGetReward (before): $canGetReward")
 
-                            // 嘗試獲得獎勵
-                            if (userEmail.isNotEmpty()) {
+                            // 檢查是否達到最低距離要求（0.5公里）
+                            if (totalDistance < 0.5) {
+                                showInsufficientDistanceDialog = true
+                                Log.d("BusScreen", "距離不足 0.5 公里，無法獲得獎勵")
+                            } else if (userEmail.isNotEmpty()) {
                                 Log.d("BusScreen", "進入獎勵判斷區塊")
                                 val rewarded = viewModel.rewardCarbonCalculator(userEmail)
 
@@ -330,7 +370,7 @@ fun BusScreen(navController: NavController,
                                     Log.d("BusScreen", "顯示已獎勵對話框")
                                     showAlreadyRewardedDialog = true
                                 }
-                            }else {
+                            } else {
                                 Log.d("BusScreen", "❌ userEmail 為空,無法獲得獎勵")
                             }
                         } else {
@@ -360,4 +400,3 @@ fun BusScreen(navController: NavController,
         }
     }
 }
-

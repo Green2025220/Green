@@ -44,6 +44,7 @@ fun MotorScreen(navController: NavController,
     // 獎勵相關狀態
     var showRewardDialog by remember { mutableStateOf(false) }
     var showAlreadyRewardedDialog by remember { mutableStateOf(false) }
+    var showInsufficientDistanceDialog by remember { mutableStateOf(false) }
     var canGetReward by remember { mutableStateOf(true) }
 
     // 載入上次使用日期
@@ -139,7 +140,7 @@ fun MotorScreen(navController: NavController,
             text = {
                 Column {
                     Text("完成碳排放記錄！")
-                    Text("獲得 1 分")
+                    Text("獲得 3 分")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
@@ -184,6 +185,41 @@ fun MotorScreen(navController: NavController,
             },
             confirmButton = {
                 Button(onClick = { showAlreadyRewardedDialog = false }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
+
+    // 距離不足對話框
+    if (showInsufficientDistanceDialog) {
+        AlertDialog(
+            onDismissRequest = { showInsufficientDistanceDialog = false },
+            title = { Text("🎉 完成碳排放記錄！") },
+            text = {
+                Column {
+                    Text("至少需要行駛 0.5 公里才能獲得分數")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "本次行駛: ${String.format("%.2f", totalDistance)} 公里",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        "本次碳排放: ${String.format("%.2f", totalCarbonEmission)} kg CO₂",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "再接再厲！",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showInsufficientDistanceDialog = false }) {
                     Text("知道了")
                 }
             }
@@ -256,7 +292,7 @@ fun MotorScreen(navController: NavController,
                 ) {
                     if (canGetReward) {
                         Text(
-                            "💚 今日尚未記錄 (可獲得 5 分)",
+                            "💚 今日尚未記錄 (可獲得 3 分)",
                             color = Color(0xFF2CA673),
                             fontSize = 14.sp
                         )
@@ -308,17 +344,32 @@ fun MotorScreen(navController: NavController,
                             isCalculating = false
                             calculateCarbonEmission()
 
-                            // 嘗試獲得獎勵
-                            if (userEmail.isNotEmpty()) {
+                            Log.d("MotorScreen", "=== 停止計算 ===")
+                            Log.d("MotorScreen", "userEmail: '$userEmail'")
+                            Log.d("MotorScreen", "行駛距離: $totalDistance km")
+                            Log.d("MotorScreen", "碳排放量: $totalCarbonEmission kg CO₂")
+
+                            // 檢查是否達到最低距離要求（0.5公里）
+                            if (totalDistance < 0.5) {
+                                showInsufficientDistanceDialog = true
+                                Log.d("MotorScreen", "❌ 距離不足 0.5 公里，無法獲得獎勵")
+                            } else if (userEmail.isNotEmpty()) {
+                                Log.d("MotorScreen", "進入獎勵判斷區塊")
                                 val rewarded = viewModel.rewardCarbonCalculator(userEmail)
+
                                 if (rewarded) {
+                                    Log.d("MotorScreen", "顯示獎勵對話框")
                                     showRewardDialog = true
                                     canGetReward = false
                                 } else {
+                                    Log.d("MotorScreen", "顯示已獎勵對話框")
                                     showAlreadyRewardedDialog = true
                                 }
+                            } else {
+                                Log.d("MotorScreen", "❌ userEmail 為空,無法獲得獎勵")
                             }
                         } else {
+                            Log.d("MotorScreen", "開始計算")
                             isCalculating = true
                             totalDistance = 0.0
                             totalCarbonEmission = 0.0
@@ -344,4 +395,3 @@ fun MotorScreen(navController: NavController,
         }
     }
 }
-

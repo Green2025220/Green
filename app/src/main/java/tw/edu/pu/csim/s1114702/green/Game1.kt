@@ -118,6 +118,24 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
             Question(R.drawable.question56, listOf("直接丟回收，不用處理", "倒空、沖一下再壓扁回收"), 1),
             Question(R.drawable.question57, listOf("不用拆，整瓶丟", "要倒空、拆蓋拆標再回收"), 1),
             Question(R.drawable.question58, listOf("攤平、綁好再回收", "直接皺著丟進回收桶"), 0),
+
+            Question(R.drawable.question59, listOf("每天用塑膠吸管", "隨身攜帶環保杯", "用一次性塑膠袋"), 1),
+            Question(R.drawable.question60, listOf("蔬菜", "豆類", "紅肉"), 2),
+            Question(R.drawable.question61, listOf("每天開冷氣", "冷氣溫度調18度C", "開窗通風降低冷氣使用"), 2),
+            Question(R.drawable.question62, listOf("環保標章（如碳足跡標示）", "一般塑膠包裝", "進口商品"), 0),
+            Question(R.drawable.question63, listOf("購買新衣服", "經常換新手機", "購買二手或環保衣物"), 2),
+
+            Question(R.drawable.question64, listOf("紙盒", "塑料袋", "鋁箔包裝盒", "保麗龍"), 3),
+            Question(R.drawable.question65, listOf("PET（寶特瓶）", "PP（一次性餐具）", "PS（保麗龍）", "這些都能回收"), 0),
+            Question(R.drawable.question66, listOf("丟進垃圾桶", "拿去3C回收站", "賣給二手回收商", "放在家裡當備用機"), 1),
+            Question(R.drawable.question67, listOf("直接丟進回收桶", "清洗乾淨後再回收", "敲碎後回收", "跟塑料瓶一起丟回收"), 1),
+            Question(R.drawable.question68, listOf("可以回收", "不能回收", "要丟進普通垃圾桶", "應該放進可回收金屬桶"), 0),
+
+            Question(R.drawable.question69, listOf("全部可以一起回收", "紙箱與報紙一起回收，雜誌分開", "報紙和紙箱回收，雜誌丟掉", "雜誌丟垃圾，報紙和紙箱回收"), 1),
+            Question(R.drawable.question70, listOf("清洗乾淨後再回收", "分類不同種類的塑膠", "直接丟進回收桶", "所有步驟都很重要"), 0),
+            Question(R.drawable.question71, listOf("變成新的鋁罐", "變成鋁製家具", "變成衣物", "製作成保麗龍"), 0),
+            Question(R.drawable.question72, listOf("減少購買一次性用品", "只使用可回收物品", "多用塑膠袋來裝垃圾", "只要回收就行"), 0),
+
         )
     }
 
@@ -131,7 +149,7 @@ fun QuizGameScreen(navController: NavController, viewModel: ViewModel, userEmail
     var showOptions by remember { mutableStateOf(false) }  // 控制是否顯示選項
     val maxQuestions = 5
 
-    val maxPlaysPerDay = 3
+    val maxPlaysPerDay = 1
     var showLimitDialog by remember { mutableStateOf(false) }
     var canPlay by remember { mutableStateOf(true) }
     var remainingPlays by remember { mutableStateOf(maxPlaysPerDay) }
