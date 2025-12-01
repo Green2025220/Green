@@ -64,18 +64,25 @@ val disassembleItems = setOf(
 
 // ====== 英文轉中文對照表 ======
 val itemTranslations = mapOf(
-    "bottle" to "瓶子", "wine glass" to "酒杯", "cup" to "杯子", "bowl" to "碗",
-    "book" to "書", "spoon" to "湯匙", "fork" to "叉子", "knife" to "刀子",
-    "laptop" to "筆記型電腦", "mouse" to "滑鼠", "keyboard" to "鍵盤",
-    "cell phone" to "手機", "tv" to "電視/顯示器", "remote" to "遙控器",
-    "microwave" to "微波爐", "oven" to "烤箱", "toaster" to "烤麵包機",
-    "refrigerator" to "冰箱", "scissors" to "剪刀", "toothbrush" to "牙刷",
-    "banana" to "香蕉", "apple" to "蘋果", "sandwich" to "三明治",
-    "orange" to "橘子", "broccoli" to "花椰菜", "carrot" to "紅蘿蔔",
-    "hot dog" to "熱狗", "pizza" to "披薩", "donut" to "甜甜圈",
-    "cake" to "蛋糕", "teddy bear" to "泰迪熊", "umbrella" to "雨傘",
-    "vase" to "花瓶", "clock" to "時鐘", "hair drier" to "吹風機"
-    // ... 其他翻譯省略
+    "bottle" to "瓶子", "wine glass" to "酒杯", "cup" to "杯子", "bowl" to "碗", "book" to "書",
+    "spoon" to "湯匙", "fork" to "叉子", "knife" to "刀子", "laptop" to "筆記型電腦", "mouse" to "滑鼠",
+    "keyboard" to "鍵盤", "cell phone" to "手機", "tv" to "電視/顯示器", "remote" to "遙控器",
+    "microwave" to "微波爐", "oven" to "烤箱", "toaster" to "烤麵包機", "refrigerator" to "冰箱",
+    "scissors" to "剪刀", "toothbrush" to "牙刷", "banana" to "香蕉", "apple" to "蘋果",
+    "sandwich" to "三明治", "orange" to "橘子", "broccoli" to "花椰菜", "carrot" to "紅蘿蔔",
+    "hot dog" to "熱狗", "pizza" to "披薩", "donut" to "甜甜圈", "cake" to "蛋糕",
+    "teddy bear" to "泰迪熊", "airplane" to "飛機", "bicycle" to "腳踏車", "boat" to "船",
+    "bus" to "公車", "car" to "汽車", "motorcycle" to "摩托車", "train" to "火車", "truck" to "卡車",
+    "bear" to "熊", "bird" to "鳥", "cat" to "貓", "cow" to "牛", "dog" to "狗", "elephant" to "大象",
+    "giraffe" to "長頸鹿", "horse" to "馬", "zebra" to "斑馬", "sheep" to "羊", "bed" to "床",
+    "bench" to "長椅", "chair" to "椅子", "couch" to "沙發", "dining table" to "餐桌",
+    "potted plant" to "盆栽", "toilet" to "馬桶", "sink" to "水槽", "baseball bat" to "棒球棍",
+    "baseball glove" to "棒球手套", "frisbee" to "飛盤", "kite" to "風箏", "skateboard" to "滑板",
+    "skis" to "滑雪板", "snowboard" to "滑雪板", "sports ball" to "運動球", "surfboard" to "衝浪板",
+    "tennis racket" to "網球拍", "backpack" to "背包", "clock" to "時鐘", "hair drier" to "吹風機",
+    "handbag" to "手提包", "suitcase" to "行李箱", "tie" to "領帶", "umbrella" to "雨傘",
+    "vase" to "花瓶", "fire hydrant" to "消防栓", "parking meter" to "停車收費表",
+    "stop sign" to "停止標誌", "traffic light" to "紅綠燈", "person" to "人"
 )
 
 fun classifyItem(itemName: String): String {
