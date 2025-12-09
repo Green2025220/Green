@@ -48,7 +48,6 @@ class GeminiClassifier(private val apiKey: String) {
         Log.d("GeminiClassifier", "📌 API Key 長度: ${apiKey.length}")
         Log.d("GeminiClassifier", "📌 API Key 前15字元: ${apiKey.take(15)}")
         Log.d("GeminiClassifier", "📌 是否為空: ${apiKey.isEmpty()}")
-        Log.d("GeminiClassifier", "📌 完整 API Key: $apiKey")  // ⚠️ 測試完記得刪除
         Log.d("GeminiClassifier", "====================================")
     }
 
@@ -155,9 +154,21 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                 if (!response.isSuccessful) {
                     Log.e("GeminiClassifier", "❌ API 錯誤: ${response.code}")
                     Log.e("GeminiClassifier", "❌ 錯誤內容: $responseBody")
+
+                    // 提供更詳細的錯誤訊息
+                    val errorReason = when (response.code) {
+                        400 -> "請求格式錯誤"
+                        401 -> "API Key 無效"
+                        403 -> "API Key 沒有權限"
+                        404 -> "模型不存在"
+                        429 -> "配額已用完"
+                        500, 503 -> "伺服器錯誤"
+                        else -> "API 錯誤"
+                    }
+
                     return@withContext GeminiClassificationResult(
                         category = "其他",
-                        reason = "API 錯誤",
+                        reason = errorReason,
                         isGarbage = false
                     )
                 }
@@ -286,6 +297,9 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                     })
                 }.toString()
 
+                Log.d("GeminiClassifier", "📤 發送材質分析請求")
+                Log.d("GeminiClassifier", "🌐 URL: $url")
+
                 val request = Request.Builder()
                     .url(url)
                     .post(requestBody.toRequestBody("application/json".toMediaType()))
@@ -296,7 +310,8 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
 
                 if (!response.isSuccessful) {
                     Log.e("GeminiClassifier", "❌ 材質分析 API 錯誤: ${response.code}")
-                    return@withContext MaterialAnalysisResult.createError("API 錯誤")
+                    Log.e("GeminiClassifier", "❌ 錯誤內容: $responseBody")
+                    return@withContext MaterialAnalysisResult.createError("API 錯誤 (${response.code})")
                 }
 
                 val jsonResponse = JSONObject(responseBody)
@@ -310,6 +325,7 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                     return@withContext MaterialAnalysisResult.createError("解析失敗")
                 }
 
+                Log.d("GeminiClassifier", "✅ 材質分析成功")
                 Log.d("GeminiClassifier", "📋 材質分析結果: $text")
 
                 return@withContext parseMaterialAnalysis(text)
