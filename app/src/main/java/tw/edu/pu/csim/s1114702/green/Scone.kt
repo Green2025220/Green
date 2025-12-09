@@ -2,6 +2,7 @@ package tw.edu.pu.csim.s1114702.green
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -88,6 +90,7 @@ fun SconeScreen(navController: NavController) {
 
             // 圓形按鈕群組
             Box(modifier = Modifier.fillMaxSize()) {
+                // 上方兩個按鈕
                 ImageButton(
                     resId = R.drawable.gamebtn,
                     contentDescription = "森林闖關",
@@ -104,6 +107,7 @@ fun SconeScreen(navController: NavController) {
                         .offset(x = 100.dp, y = (-80).dp)
                 ) { navController.navigate("myforest") }
 
+                // 下方兩個按鈕
                 ImageButton(
                     resId = R.drawable.calculatorbtn,
                     contentDescription = "碳排放計算器",
@@ -120,6 +124,36 @@ fun SconeScreen(navController: NavController) {
                         .offset(x = 100.dp, y = 80.dp)
                 ) { navController.navigate("garbage") }
 
+                // ⭐ 新增：中間的每日任務按鈕
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(110.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF4CAF50))
+                        .border(4.dp, Color(0xFF2E7D32), CircleShape)
+                        .clickable { navController.navigate("dailyJournal") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "📔",
+                            fontSize = 36.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "每日任務",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                // 商店按鈕（底部）
                 ImageButton(
                     resId = R.drawable.storebtn,
                     contentDescription = "商店",

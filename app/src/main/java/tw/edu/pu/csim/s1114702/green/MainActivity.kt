@@ -108,6 +108,14 @@ fun AppNavigation() {
             viewModel = viewModel,
             userEmail = userEmail
         ) }
+        // ⭐ 新增：每日任務日記路由
+        composable("dailyJournal") {
+            DailyJournalScreen(
+                navController = navController,
+                viewModel = viewModel,
+                userEmail = userEmail
+            )
+        }
     }
 }
 
