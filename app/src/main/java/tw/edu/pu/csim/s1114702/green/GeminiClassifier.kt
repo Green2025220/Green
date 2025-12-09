@@ -43,6 +43,14 @@ data class MaterialAnalysisResult(
 }
 
 class GeminiClassifier(private val apiKey: String) {
+    init {
+        Log.d("GeminiClassifier", "========== API KEY 診斷 ==========")
+        Log.d("GeminiClassifier", "📌 API Key 長度: ${apiKey.length}")
+        Log.d("GeminiClassifier", "📌 API Key 前15字元: ${apiKey.take(15)}")
+        Log.d("GeminiClassifier", "📌 是否為空: ${apiKey.isEmpty()}")
+        Log.d("GeminiClassifier", "📌 完整 API Key: $apiKey")  // ⚠️ 測試完記得刪除
+        Log.d("GeminiClassifier", "====================================")
+    }
 
     private val USE_MOCK_MODE = false
 
@@ -62,7 +70,34 @@ class GeminiClassifier(private val apiKey: String) {
                 "banana", "apple", "orange", "broccoli", "carrot",
                 "sandwich", "hot dog", "pizza", "donut", "cake" ->
                     GeminiClassificationResult("廚餘", "食物殘渣", true)
-                // 更多模擬數據略...
+                "mouse", "keyboard", "laptop", "cell phone", "remote", "tv" ->
+                    GeminiClassificationResult("回收", "電子產品", true)
+                "bottle", "wine glass", "cup" ->
+                    GeminiClassificationResult("回收", "可回收容器", true)
+                "book" -> GeminiClassificationResult("回收", "紙類", true)
+                "bicycle" -> GeminiClassificationResult("回收", "金屬", true)
+                "hair drier", "microwave", "oven", "toaster", "refrigerator" ->
+                    GeminiClassificationResult("回收", "小家電", true)
+                "teddy bear" -> GeminiClassificationResult("一般垃圾", "玩具", true)
+                "toothbrush" -> GeminiClassificationResult("一般垃圾", "日用品", true)
+                "clock", "baseball bat", "baseball glove", "sports ball" ->
+                    GeminiClassificationResult("一般垃圾", "雜物", true)
+                "backpack", "handbag", "suitcase", "tie" ->
+                    GeminiClassificationResult("一般垃圾", "布料", true)
+                "umbrella", "skateboard", "surfboard", "tennis racket",
+                "kite", "frisbee", "skis", "snowboard" ->
+                    GeminiClassificationResult("回收", "需拆解", true)
+                "vase", "spoon", "fork", "bowl", "knife", "scissors" ->
+                    GeminiClassificationResult("回收", "視材質", true)
+                "person", "cat", "dog", "bird", "bear", "elephant", "giraffe",
+                "horse", "zebra", "sheep", "cow" ->
+                    GeminiClassificationResult("其他", "生物", false)
+                "car", "bus", "train", "airplane", "boat", "motorcycle", "truck" ->
+                    GeminiClassificationResult("其他", "交通工具", false)
+                "bed", "couch", "chair", "bench", "dining table" ->
+                    GeminiClassificationResult("其他", "大型家具", false)
+                "traffic light", "fire hydrant", "stop sign", "parking meter" ->
+                    GeminiClassificationResult("其他", "公共設施", false)
                 else -> GeminiClassificationResult("其他", "未知物品", false)
             }
         }
@@ -105,7 +140,7 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                     })
                 }.toString()
 
-                Log.d("GeminiClassifier", "📤 發送請求到: $url")
+                Log.d("GeminiClassifier", "📤 發送請求到 Gemini API")
 
                 val request = Request.Builder()
                     .url(url)
@@ -118,7 +153,8 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                 Log.d("GeminiClassifier", "📥 HTTP Status: ${response.code}")
 
                 if (!response.isSuccessful) {
-                    Log.e("GeminiClassifier", "❌ API 錯誤: $responseBody")
+                    Log.e("GeminiClassifier", "❌ API 錯誤: ${response.code}")
+                    Log.e("GeminiClassifier", "❌ 錯誤內容: $responseBody")
                     return@withContext GeminiClassificationResult(
                         category = "其他",
                         reason = "API 錯誤",
