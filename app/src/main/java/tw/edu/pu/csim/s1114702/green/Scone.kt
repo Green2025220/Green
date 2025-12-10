@@ -125,33 +125,12 @@ fun SconeScreen(navController: NavController) {
                 ) { navController.navigate("garbage") }
 
                 // ⭐ 新增：中間的每日任務按鈕
-                Box(
+                ImageButton(
+                    resId = R.drawable.missionbtn,
+                    contentDescription = "每日任務",
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .size(110.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF4CAF50))
-                        .border(4.dp, Color(0xFF2E7D32), CircleShape)
-                        .clickable { navController.navigate("dailyJournal") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "📔",
-                            fontSize = 36.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "每日任務",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
+                ) { navController.navigate("dailyJournal") }
 
                 // 商店按鈕（底部）
                 ImageButton(
