@@ -287,15 +287,15 @@ class GeminiClassifier(private val apiKey: String) {
                 //checkAndWaitForQuota()
 
                 val prompt = """
-你是台灣垃圾分類專家。物品: $chineseName
+你是台灣垃圾分類專家。請判斷物品「$chineseName」的垃圾分類。
 
-規則:
-- 電子產品/小家電/紙類→回收
-- 食物→廚餘  
-- 玩具/日用品→一般垃圾
-- 人/動物/交通工具/大型家具→其他(非垃圾)
+分類規則:
+1. 回收 (isGarbage=true): 電子產品、小家電、金屬、塑膠、紙類、玻璃、容器
+2. 廚餘 (isGarbage=true): 食物殘渣、果皮、茶葉渣
+3. 一般垃圾 (isGarbage=true): 玩具、日用品、文具、衣物、布料
+4. 其他 (isGarbage=false): 生物(人/動物)、交通工具、大型家具、公共設施
 
-直接輸出JSON，不要思考過程: {"category":"分類","reason":"理由","isGarbage":true/false}
+直接輸出JSON: {"category":"分類","reason":"理由","isGarbage":true/false}
 """.trimIndent()
 
                 val url = "https://generativelanguage.googleapis.com/v1/models/$currentModel:generateContent?key=$apiKey"
