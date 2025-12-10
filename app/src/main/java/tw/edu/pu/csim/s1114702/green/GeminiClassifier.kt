@@ -7,6 +7,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -53,11 +54,175 @@ class GeminiClassifier(private val apiKey: String) {
 
     private val USE_MOCK_MODE = false
 
+    // ⭐ 根據官方文檔，使用不帶版本號的模型名稱
+    private val RECOMMENDED_MODELS = listOf(
+        "gemini-2.5-flash",      // 最新穩定版
+        "gemini-2.0-flash",      // 2.0 版本
+        "gemini-1.5-flash",      // 1.5 版本
+        "gemini-1.5-pro",        // Pro 版本
+        "gemini-pro"             // 基礎版本
+    )
+
+    // 當前使用的模型
+    private var currentModel: String? = null
+    private var modelInitialized = false
+
+    // ⭐ 新增：請求追蹤（配額管理）
+    private val requestTimestamps = mutableListOf<Long>()
+    private val maxRequestsPerMinute = 4  // Gemini 2.5 限制是 5，設 4 保險
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    /**
+     * 自動查找並設定可用的模型
+     */
+    suspend fun initializeModel(): Boolean {
+        if (modelInitialized && currentModel != null) {
+            return true
+        }
+
+        return withContext(Dispatchers.IO) {
+            try {
+                Log.d("GeminiClassifier", "🔍 開始查找可用模型...")
+
+                // 方法 1: 先嘗試推薦的模型
+                for (model in RECOMMENDED_MODELS) {
+                    if (testModelQuick(model)) {
+                        currentModel = model
+                        modelInitialized = true
+                        Log.d("GeminiClassifier", "✅ 使用模型: $model")
+                        return@withContext true
+                    }
+                }
+
+                // 方法 2: 如果推薦模型都不行，查詢所有可用模型
+                Log.d("GeminiClassifier", "📋 查詢 API 支援的所有模型...")
+                val availableModels = listAvailableModels()
+
+                for (modelInfo in availableModels) {
+                    if (testModelQuick(modelInfo.name)) {
+                        currentModel = modelInfo.name
+                        modelInitialized = true
+                        Log.d("GeminiClassifier", "✅ 使用模型: ${modelInfo.name}")
+                        return@withContext true
+                    }
+                }
+
+                Log.e("GeminiClassifier", "❌ 找不到任何可用的模型")
+                false
+
+            } catch (e: Exception) {
+                Log.e("GeminiClassifier", "❌ 初始化失敗", e)
+                false
+            }
+        }
+    }
+
+    /**
+     * 快速測試模型是否可用
+     */
+    private suspend fun testModelQuick(modelName: String): Boolean {
+        return try {
+            val url = "https://generativelanguage.googleapis.com/v1/models/$modelName:generateContent?key=$apiKey"
+
+            val requestBody = JSONObject().apply {
+                put("contents", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("text", "hi")
+                            })
+                        })
+                    })
+                })
+            }.toString()
+
+            val request = Request.Builder()
+                .url(url)
+                .post(requestBody.toRequestBody("application/json".toMediaType()))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val success = response.isSuccessful
+
+            if (success) {
+                Log.d("GeminiClassifier", "  ✅ $modelName 可用")
+            } else {
+                Log.d("GeminiClassifier", "  ❌ $modelName 不可用 (${response.code})")
+            }
+
+            response.close()
+            success
+
+        } catch (e: Exception) {
+            Log.d("GeminiClassifier", "  ❌ $modelName 測試失敗")
+            false
+        }
+    }
+
+    /**
+     * 列出所有可用模型（使用 v1beta API）
+     */
+    private suspend fun listAvailableModels(): List<ModelInfo> {
+        return try {
+            val url = "https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey"
+
+            val request = Request.Builder()
+                .url(url)
+                .get()
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+
+            if (!response.isSuccessful) {
+                return emptyList()
+            }
+
+            val jsonResponse = JSONObject(responseBody)
+            val modelsArray = jsonResponse.getJSONArray("models")
+
+            val modelsList = mutableListOf<ModelInfo>()
+
+            for (i in 0 until modelsArray.length()) {
+                val modelObj = modelsArray.getJSONObject(i)
+                val fullName = modelObj.getString("name")
+                val modelName = fullName.substringAfter("models/")
+
+                val supportedMethods = modelObj.optJSONArray("supportedGenerationMethods")
+                    ?: JSONArray()
+                val supportsGenerate = (0 until supportedMethods.length())
+                    .map { supportedMethods.getString(it) }
+                    .contains("generateContent")
+
+                if (supportsGenerate) {
+                    modelsList.add(ModelInfo(
+                        name = modelName,
+                        displayName = modelObj.optString("displayName", modelName)
+                    ))
+                    Log.d("GeminiClassifier", "  📌 發現: $modelName")
+                }
+            }
+
+            modelsList
+
+        } catch (e: Exception) {
+            Log.e("GeminiClassifier", "查詢模型列表失敗", e)
+            emptyList()
+        }
+    }
+    /*
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+     */
 
     // ===== 原有的垃圾分類方法 =====
     suspend fun classifyGarbage(itemName: String, chineseName: String): GeminiClassificationResult {
@@ -101,30 +266,44 @@ class GeminiClassifier(private val apiKey: String) {
             }
         }
 
+        // 確保模型已初始化
+        if (!modelInitialized) {
+            val initialized = initializeModel()
+            if (!initialized || currentModel == null) {
+                return GeminiClassificationResult(
+                    category = "其他",
+                    reason = "模型初始化失敗",
+                    isGarbage = false
+                )
+            }
+        }
+
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("GeminiClassifier", "🔄 開始 REST API 呼叫: $chineseName ($itemName)")
+                Log.d("GeminiClassifier", "📌 使用模型: $currentModel")
+
+                // ⭐ 檢查配額
+                //checkAndWaitForQuota()
 
                 val prompt = """
-你是一個台灣垃圾分類專家。請判斷物品的分類。
-物品: $chineseName
+你是台灣垃圾分類專家。物品: $chineseName
 
-分類規則:
+規則:
 - 電子產品/小家電/紙類→回收
-- 食物→廚餘
+- 食物→廚餘  
 - 玩具/日用品→一般垃圾
 - 人/動物/交通工具/大型家具→其他(非垃圾)
 
-JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字內","isGarbage":true/false}
-不要額外文字。
+直接輸出JSON，不要思考過程: {"category":"分類","reason":"理由","isGarbage":true/false}
 """.trimIndent()
 
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
+                val url = "https://generativelanguage.googleapis.com/v1/models/$currentModel:generateContent?key=$apiKey"
 
                 val requestBody = JSONObject().apply {
-                    put("contents", org.json.JSONArray().apply {
+                    put("contents", JSONArray().apply {
                         put(JSONObject().apply {
-                            put("parts", org.json.JSONArray().apply {
+                            put("parts", JSONArray().apply {
                                 put(JSONObject().apply {
                                     put("text", prompt)
                                 })
@@ -135,11 +314,12 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                         put("temperature", 0.3)
                         put("topK", 32)
                         put("topP", 0.95)
-                        put("maxOutputTokens", 256)
+                        put("maxOutputTokens", 512)
                     })
                 }.toString()
 
                 Log.d("GeminiClassifier", "📤 發送請求到 Gemini API")
+                Log.d("GeminiClassifier", "🌐 URL: $url")
 
                 val request = Request.Builder()
                     .url(url)
@@ -239,50 +419,64 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
         englishName: String,
         chineseName: String
     ): MaterialAnalysisResult {
+
+        // 確保模型已初始化
+        if (!modelInitialized) {
+            initializeModel()
+        }
+
+        if (currentModel == null) {
+            return MaterialAnalysisResult.createError("模型未初始化")
+        }
+
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("GeminiClassifier", "🔬 開始材質分析: $chineseName")
+                Log.d("GeminiClassifier", "📌 使用模型: $currentModel")
+
+                // ⭐ 檢查配額
+                //checkAndWaitForQuota()
 
                 val prompt = """
 物品：$chineseName ($englishName)
 
-請提供詳細的回收分析，包含：
+物品：$chineseName
 
-1. **主要材質**：具體材質名稱（如：PET塑膠、玻璃、不鏽鋼等）
-2. **材質代碼**：如果是塑膠，請標示回收編號（1-7號）
-3. **是否為複合材質**：如果是，列出所有材質成分
-4. **可回收性**：明確說明是否可回收
-5. **回收小知識**（至少4條）：
-   - 回收前的處理方式
-   - 清洗或分類注意事項
-   - 常見錯誤做法
-   - 環保小提醒
-6. **拆解指南**（如果需要拆解）：
-   - 具體拆解步驟
-   - 各部分如何分類
-   - 拆解注意事項
+嚴格按照以下格式回答，不要額外說明：
 
-請用繁體中文回答，格式如下：
-材質：[主要材質]
-代碼：[材質代碼或"無"]
-複材：[是/否，如果是請說明]
+材質：[主要材質名稱]
+代碼：[塑膠回收編號1-7或"無"]
+複材：[是/否，說明成分]
 可回收：[是/否]
 知識：
-- [知識點1]
-- [知識點2]
-- [知識點3]
-- [知識點4]
+- [回收前處理]
+- [清洗注意事項]
+- [常見錯誤]
+- [環保提醒]
 拆解：
 - [步驟1或"不需拆解"]
 - [步驟2]
+
+範例：
+材質：聚酯纖維
+代碼：無
+複材：是，含棉花填充物
+可回收：否
+知識：
+- 布類玩具不可回收
+- 捐贈前需清洗乾淨
+- 不可混入紙類回收
+- 考慮二手捐贈
+拆解：
+- 不需拆解
 """.trimIndent()
 
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
+                val url = "https://generativelanguage.googleapis.com/v1/models/$currentModel:generateContent?key=$apiKey"
 
                 val requestBody = JSONObject().apply {
-                    put("contents", org.json.JSONArray().apply {
+                    put("contents", JSONArray().apply {
                         put(JSONObject().apply {
-                            put("parts", org.json.JSONArray().apply {
+                            put("parts", JSONArray().apply {
                                 put(JSONObject().apply {
                                     put("text", prompt)
                                 })
@@ -293,12 +487,9 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
                         put("temperature", 0.3)
                         put("topK", 32)
                         put("topP", 0.95)
-                        put("maxOutputTokens", 1024)
+                        put("maxOutputTokens", 2048)
                     })
                 }.toString()
-
-                Log.d("GeminiClassifier", "📤 發送材質分析請求")
-                Log.d("GeminiClassifier", "🌐 URL: $url")
 
                 val request = Request.Builder()
                     .url(url)
@@ -408,4 +599,8 @@ JSON格式: {"category":"回收/廚餘/一般垃圾/其他","reason":"理由5字
             return MaterialAnalysisResult.createError("解析失敗")
         }
     }
+    data class ModelInfo(
+        val name: String,
+        val displayName: String
+    )
 }
